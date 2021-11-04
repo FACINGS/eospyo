@@ -1,0 +1,24 @@
+[flake8]
+max-complexity = 5
+per-file-ignores =
+    # imported but unused
+    __init__.py: F401
+    # All docstrings in tests
+    tests/**.py: D
+    # All docstrings and importing in alembic
+    alembic/**.py: D, I
+exclude =
+    # No need to traverse our git directory
+    .git,
+    # There's no value in checking cache directories
+    __pycache__,
+    # No need to traverse the venv dir
+    .venv
+ignore =
+    D101,   # Missing docstring in public class
+    D102,   # Missing docstring in public method
+    D103,   # Missing docstring in public function
+    D104,   # Missing docstring in public package
+    D105,   # Missing docstring in magic method
+    D106,   # Missing docstring in public nested class
+    D107    # Missing docstring in __init__

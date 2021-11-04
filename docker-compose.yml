@@ -1,0 +1,45 @@
+version: "3"
+
+
+x-common: &commons
+    deploy:
+        resources:
+            limits:
+                cpus: '0.5'
+                memory: 500m
+
+    mem_swappiness: 0
+    memswap_limit: 0
+
+
+services:
+    nodeos:
+        image: eosio/eosio:6912e2e5c1dd88cdbfb8854958e3690c3c3c3592
+        container_name: nodeos
+        command: ["bash", "/sample_contract/run_nodeos.sh"]
+
+        volumes:
+            - ./sample_contract:/sample_contract:ro
+
+        ports:
+            - "8888:8888/tcp"
+
+        healthcheck:
+            test: ["CMD", "curl", "http://localhost:8888/v1/chain/get_info"]
+            interval: 10s
+            timeout: 10s
+            retries: 3
+            start_period: 60s
+
+
+    deployer:
+        image: eosio/eosio:6912e2e5c1dd88cdbfb8854958e3690c3c3c3592
+        container_name: deployer
+        command: ["bash", "/sample_contract/prepare_nodeos.sh"]
+
+        volumes:
+            - ./sample_contract:/sample_contract:ro
+
+        depends_on:
+            nodeos:
+                condition: service_healthy
