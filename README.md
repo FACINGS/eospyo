@@ -124,7 +124,7 @@ print(f"Response:\n{resp_fmt}")
 
 
 # Known bugs
-### String serialization
+### Keys not working
 - Some keys are reported to not work. However this error was not replicated and the cause remains unknown. If you can share a key pair that is not working it would be very helpful.
 
 
