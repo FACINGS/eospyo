@@ -2,7 +2,11 @@
 name = "eospyo"
 version = "0.5.1"
 description = "Interact with EOSIO blockchain networks"
-authors = ["Edson <eospyo@facings.io>"]
+author = "Edson"
+author-email = "eospyo@facings.io"
+home-page = "https://github.com/FACINGS/eospyo"
+description-file = "README.md"
+requires-python = ">=3.8"
 
 [tool.poetry.dependencies]
 python = "^3.8"
