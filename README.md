@@ -30,50 +30,7 @@ However we'd advise for you to fix its version when deploying to prod.
 # Using
 Just `pip install eospyo` and play around.  
 (we don't support, and have no plans to support [conda](https://docs.conda.io/en/latest/))  
-Rather then starting with long docs, here are some examples:  
-
-### Run a simple action
-```
-import json
-
-import eospyo
-
-print("Create a transaction")
-
-data = {
-    "worker": "open.facings",
-    "nonce": 123,
-}
-
-auth = eospyo.Authorization(actor="youraccount", permission="active")
-
-action = eospyo.Action(
-    account="open.facings",  # this is the contract
-    name="runjobs",  # this is the action name
-    data=data,
-    authorization=[auth],
-)
-
-raw_transaction = eospyo.Transaction(actions=[action])
-
-
-print("Link transaction to the network")
-net = eospyo.WaxTestnet()
-linked_transaction = raw_transaction.link(net=net)
-
-
-print("Sign transaction")
-key = "a_very_secret_key"
-signed_transaction = linked_transaction.sign(key=key)
-
-print("Send")
-resp = signed_transaction.send()
-
-print("Printing the response")
-resp_fmt = json.dumps(resp, indent=4)
-print(f"Response:\n{resp_fmt}")
-```
-
+Rather then starting with long docs, just a simple example:  
 
 ### Use AtomicAssets transfer action
 ```
@@ -95,8 +52,8 @@ auth = eospyo.Authorization(
 )
 
 action = eospyo.Action(
-    account="atomicassets",
-    name="transfer",
+    account="atomicassets",  # this is the contract account
+    name="transfer",  # this is the action name
     data=data,
     authorization=[auth],
 )
@@ -105,7 +62,8 @@ raw_transaction = eospyo.Transaction(actions=[action])
 
 
 print("Link transaction to the network")
-net = eospyo.WaxTestnet()
+net = eospyo.WaxTestnet()  # this is an alias for a testnet node
+# notice that eospyo returns a new object instead of change in place
 linked_transaction = raw_transaction.link(net=net)
 
 
@@ -121,6 +79,8 @@ print("Printing the response")
 resp_fmt = json.dumps(resp, indent=4)
 print(f"Response:\n{resp_fmt}")
 ```
+
+There are some other examples [here](./examples)
 
 
 # Known bugs
