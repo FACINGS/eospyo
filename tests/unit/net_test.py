@@ -63,8 +63,25 @@ def test_when_net_get_info_then_chain_id_has_correct_format(net):
     assert re.fullmatch(patt, info["chain_id"])
 
 
-def test_when_instantiate_waxtestnet_then_host_has_tld():
-    net = eospyo.WaxTestnet()
+aliases = [
+    "EosMainnet",
+    "KylinTestnet",
+    "Jungle3Testnet",
+    "TelosMainnet",
+    "TelosTestnet",
+    "ProtonMainnet",
+    "ProtonTestnet",
+    "UosMainnet",
+    "FioMainnet",
+    "WaxTestnet",
+    "WaxMainnet",
+]
+
+
+@pytest.mark.parametrize("alias", aliases)
+def test_when_instantiate_though_alias_then_host_has_tld(alias):
+    net_factory = getattr(eospyo, alias)
+    net = net_factory()
     patt = r"^https://[\w\.]{3,}"
     assert re.match(patt, net.host)
 

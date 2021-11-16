@@ -157,8 +157,58 @@ class WaxMainnet(Net):
     host: pydantic.HttpUrl = "https://facings.waxpub.net"
 
 
+class EosMainnet(Net):
+    host: pydantic.HttpUrl = "https://api.eossweden.org"
+
+
+class KylinTestnet(Net):
+    host: pydantic.HttpUrl = "https://kylin.eossweden.org"
+
+
+class Jungle3Testnet(Net):
+    host: pydantic.HttpUrl = "https://jungle3.eossweden.org"
+
+
+class TelosMainnet(Net):
+    host: pydantic.HttpUrl = "https://telos.caleos.io/"
+
+
+class TelosTestnet(Net):
+    host: pydantic.HttpUrl = "https://testnet.telos.caleos.io"
+
+
+class ProtonMainnet(Net):
+    host: pydantic.HttpUrl = "https://proton.cryptolions.io"
+
+
+class ProtonTestnet(Net):
+    host: pydantic.HttpUrl = "https://testnet.protonchain.com"
+
+
+class UosMainnet(Net):
+    host: pydantic.HttpUrl = "https://uos.eosusa.news"
+
+
+class FioMainnet(Net):
+    host: pydantic.HttpUrl = "https://fio.cryptolions.io"
+
+
 class Local(Net):
     host: pydantic.HttpUrl = "http://127.0.0.1:8888"
 
 
-__all__ = ["Net", "WaxTestnet", "WaxMainnet", "Local"]
+__all__ = [
+    "Net",
+    "EosMainnet",
+    "KylinTestnet",
+    "Jungle3Testnet",
+    "TelosMainnet",
+    "TelosTestnet",
+    "ProtonMainnet",
+    "ProtonTestnet",
+    "UosMainnet",
+    "FioMainnet",
+    "WaxTestnet",
+    "WaxMainnet",
+    "Local",
+]
