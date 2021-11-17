@@ -126,6 +126,38 @@ class Net(pydantic.BaseModel):
         data = self._request(endpoint=endpoint, payload=payload)
         return data
 
+    def get_table_by_scope(
+        self,
+        code: str,
+        table: str = None,
+        lower_bound: str = None,
+        upper_bound: str = None,
+        limit: int = None,
+        reverse: bool = None,
+        show_payer: bool = None,
+    ):
+        """
+        Return a dict with all tables and their scope.
+
+        Similar to get_table_by_scope
+        https://developers.eos.io/manuals/eos/latest/nodeos/plugins/chain_api_plugin/api-reference/index#operation/get_table_by_scope
+        """
+        endpoint = "/v1/chain/get_table_by_scope"
+        payload = dict(
+            code=code,
+            table=table,
+            lower_bound=lower_bound,
+            upper_bound=upper_bound,
+            limit=limit,
+            reverse=reverse,
+            show_payer=show_payer,
+        )
+        for k in list(payload.keys()):
+            if payload[k] is None:
+                del payload[k]
+        data = self._request(endpoint=endpoint, payload=payload)
+        return data
+
     def push_transaction(
         self,
         *,

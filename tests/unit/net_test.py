@@ -179,3 +179,23 @@ def test_abi_json_to_bin_and_bin_to_json_return_same_as_sent(net):
         bytes=bindata,
     )
     assert d == json
+
+
+def test_get_table_by_scope_returns_dict(net):
+    resp = net.get_table_by_scope(code="user2")
+    assert isinstance(resp, dict)
+
+
+def test_when_get_table_by_scope_then_resp_has_rows(net):
+    resp = net.get_table_by_scope(code="user2")
+    assert "rows" in resp
+
+
+def test_when_get_table_by_scope_with_no_contract_then_rows_are_empty(net):
+    resp = net.get_table_by_scope(code="user1")
+    assert len(resp["rows"]) == 0
+
+
+def test_when_get_table_by_scope_with_contract_then_rows_have_objects(net):
+    resp = net.get_table_by_scope(code="user2")
+    assert len(resp["rows"]) > 0
