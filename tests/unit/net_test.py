@@ -199,3 +199,45 @@ def test_when_get_table_by_scope_with_no_contract_then_rows_are_empty(net):
 def test_when_get_table_by_scope_with_contract_then_rows_have_objects(net):
     resp = net.get_table_by_scope(code="user2")
     assert len(resp["rows"]) > 0
+
+
+def test_when_get_table_by_scope_from_non_existent_account_then_rows_are_empty(
+    net,
+):
+    resp = net.get_table_by_scope(code="xxx")
+    assert len(resp["rows"]) == 0
+
+
+def test_get_table_rows_returns_list(net):
+    resp = net.get_table_rows(code="user2", table="messages", scope="user2")
+    assert isinstance(resp, list)
+
+
+def test_get_table_rows_from_non_existing_table_returns_error(net):
+    resp = net.get_table_rows(code="user2", table="xxx", scope="user2")
+    assert "code" in resp
+    assert resp["code"] == 500
+
+
+def test_get_table_rows_from_no_contract_account_returns_error(net):
+    resp = net.get_table_rows(code="user1", table="messages", scope="user2")
+    assert "code" in resp
+    assert resp["code"] == 500
+
+
+def test_get_table_rows_from_non_existing_account_returns_error(net):
+    resp = net.get_table_rows(code="xxx", table="messages", scope="user2")
+    assert "code" in resp
+    assert resp["code"] == 500
+
+
+def get_table_rows_with_strange_bounds_returns_empty_list(net):
+    resp = net.get_table_rows(
+        code="user2", table="messages", scope="user2", lower_bound="zzzzzz"
+    )
+    assert resp == []
+
+
+def get_table_rows_with_strange_scope_returns_empty_list(net):
+    resp = net.get_table_rows(code="user2", table="messages", scope="user1")
+    assert resp == []
