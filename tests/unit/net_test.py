@@ -196,7 +196,28 @@ def test_when_get_table_by_scope_with_no_contract_then_rows_are_empty(net):
     assert len(resp["rows"]) == 0
 
 
+@pytest.mark.flaky(reruns=2)
 def test_when_get_table_by_scope_with_contract_then_rows_have_objects(net):
+    # send a transaction just for the table to be created
+    data = {"from": "user2", "message": "hello"}
+    trans = eospyo.Transaction(
+        actions=[
+            eospyo.Action(
+                account="user2",
+                name="sendmsg",
+                data=data,
+                authorization=[
+                    eospyo.Authorization(actor="user2", permission="active")
+                ],
+            )
+        ],
+    )
+    linked_trans = trans.link(net=net)
+    signed_trans = linked_trans.sign(
+        key="5K5UHY2LjHw2QQFJKCd2PdF7hxPJnknMfQLhxbEguJJttr1DFdp"
+    )
+    resp = signed_trans.send()
+
     resp = net.get_table_by_scope(code="user2")
     assert len(resp["rows"]) > 0
 
