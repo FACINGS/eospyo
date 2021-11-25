@@ -1,21 +1,31 @@
 import re
 
+import pytest
+
 import eospyo
 
 
-def test_waxtestnet():
-    net = eospyo.WaxTestnet()
-    info = net.get_info()
-    assert isinstance(info, tuple)
-    assert hasattr(info, "chain_id")
-    patt = r"[a-f0-9]{64}"
-    assert re.fullmatch(patt, info.chain_id)
+aliases = [
+    eospyo.EosMainnet,
+    eospyo.KylinTestnet,
+    eospyo.Jungle3Testnet,
+    eospyo.TelosMainnet,
+    eospyo.TelosTestnet,
+    eospyo.ProtonMainnet,
+    eospyo.ProtonTestnet,
+    eospyo.UosMainnet,
+    eospyo.FioMainnet,
+    eospyo.WaxTestnet,
+    eospyo.WaxMainnet,
+]
 
 
-def test_waxmainnet():
-    net = eospyo.WaxMainnet()
+@pytest.mark.flaky(reruns=3)
+@pytest.mark.parametrize("alias", aliases)
+def test_get_info_from_alias(alias):
+    net = alias()
     info = net.get_info()
-    assert isinstance(info, tuple)
-    assert hasattr(info, "chain_id")
+    assert isinstance(info, dict)
+    assert "chain_id" in info
     patt = r"[a-f0-9]{64}"
-    assert re.fullmatch(patt, info.chain_id)
+    assert re.fullmatch(patt, info["chain_id"])
