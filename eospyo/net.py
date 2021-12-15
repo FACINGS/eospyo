@@ -29,9 +29,10 @@ class Net(pydantic.BaseModel):
         verb: str = "POST",
     ):
         url = urljoin(self.host, endpoint)
+        headers = {"user-agent": "Eospyo"}
 
         try:
-            resp = httpx.post(url, json=payload)
+            resp = httpx.post(url, json=payload, headers=headers)
         except (
             httpx.TimeoutException,
             httpx.NetworkError,
