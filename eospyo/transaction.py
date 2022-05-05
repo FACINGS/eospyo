@@ -4,15 +4,22 @@
 import datetime as dt
 import hashlib
 import json
+from abc import ABC
+from typing import List
 
 import pydantic
 import ueosio
 
 from . import types
-from .net import Net
 
 
-class Authorization(pydantic.BaseModel):
+class EosioObject(pydantic.BaseModel, ABC):
+    class Config:
+        extra = "forbid"
+        frozen = True
+
+
+class Authorization(EosioObject):
     """
     Authorization to be used in Action.
 
@@ -31,110 +38,80 @@ class Authorization(pydantic.BaseModel):
         bytes_ += bytes(permission)
         return bytes_
 
-    class Config:
-        extra = "forbid"
-        frozen = True
 
+class Data(EosioObject):
+    """
+    Data to be used in actions.
 
-class Data:
-    __frozen = False
+    name: the data field name
+    value: the typed value (types.EosioType) of the data
+    """
 
-    def __init__(self, **kwargs):
-        self._d = kwargs
-        self.__frozen = True
+    name: str
+    value: types.EosioType
 
-    def __getattr__(self, value):
-        return self._d[value]
-
-    def __setattr__(self, attr, value):
-        if self.__frozen is True:
-            raise TypeError("Cannot modify value of 'Data'")
-        self.__dict__[attr] = value
-
-    def __delattr__(self, attr):
-        if self.__frozen is True:
-            raise TypeError("Cannot modify value of 'Data'")
-        del self.__dict__[attr]
+    def __init__(self, *args, **kwargs):
+        if len(args) == 1:
+            if isinstance(args[0], dict):
+                self = self.parse_obj(args[0])
+                return
+        super().__init__(*args, **kwargs)
 
     @classmethod
-    def from_dict(cls, obj):
-        return cls(**obj)
+    def parse_obj(self, obj):
+        for field in ["name", "type", "value"]:
+            if field not in obj:
+                msg = f"Field {field} expected. {obj}"
+                raise ValueError(msg)
+        if len(obj) != 3:
+            msg = (
+                f"Object with lenght 3 was expected, but {len(obj)} "
+                f"found: {obj}"
+            )
+            raise ValueError(msg)
+        name = obj["name"]
+        type_str = obj["type"]
+        value_raw = obj["value"]
+        type_obj = types.from_string(type_str)
+        value = type_obj(value_raw)
+        return Data(name=name, value=value)
 
     def dict(self):
-        return self._d
+        d = dict(
+            name=self.name,
+            type=self.value.__class__.__name__,
+            value=self.value.value,
+        )
+        return d
 
     def json(self):
-        return json.dumps(self._d)
+        d = self.dict()
+        j = json.dumps(d)
+        return j
 
-    def __hash__(self):
-        return hash("Data" + self.json())
-
-    def __eq__(self, other):
-        return hash(self) == hash(other)
+    def __bytes__(self):
+        return bytes(self.value)
 
 
-class Action(pydantic.BaseModel):
+class Action(EosioObject):
     """
     Action to be used in Transaction.
 
     account: str
     name: str
-    data: list[dict]
-    authorization: list[Authorization]
+    data: list[Data]
+    authorization: list[Action]
     """
 
     account: pydantic.constr(max_length=13)
     name: str
     authorization: pydantic.conlist(Authorization, min_items=1, max_items=10)
-    data: Data
+    data: List[Data]
 
-    @pydantic.validator("data", pre=True)
-    def transform_to_data(cls, v):
-        if isinstance(v, dict):
-            return Data.from_dict(v)
-        elif v is None:
-            return Data()
-        return v
-
-    @pydantic.validator("authorization")
+    @pydantic.validator("data", "authorization")
     def transform_to_tuple(cls, v):
         new_v = tuple(v)
         return new_v
-
-    def link(self, net: Net):
-        return LinkedAction(
-            account=self.account,
-            name=self.name,
-            authorization=self.authorization,
-            data=self.data,
-            net=net,
-        )
-
-    def __bytes__(self):
-        name = self.__class__.__name__
-        raise TypeError(f"cannot convert '{name}' object to bytes")
-
-    class Config:
-        extra = "forbid"
-        frozen = True
-        arbitrary_types_allowed = True
-
-
-class LinkedAction(Action):
-    """
-    Action to be used in LinkedTransaction.
-
-    account: str
-    name: str
-    data: list[Data]
-    authorization: list[Authorization]
-    """
-
-    account: pydantic.constr(max_length=13)
-    name: str
-    authorization: pydantic.conlist(Authorization, min_items=1, max_items=10)
-    data: Data
-    net: Net
 
     def __bytes__(self):
         bytes_ = b""
@@ -147,17 +124,9 @@ class LinkedAction(Action):
         auth = types.Array(type_=types.Bytes, values=auth_bytes)
         bytes_ += bytes(auth)
 
-        resp = self.net.abi_json_to_bin(
-            account_name=self.account,
-            action=self.name,
-            json=self.data.dict(),
-        )
-        if isinstance(resp, dict):
-            resp_fmt = json.dumps(resp, indent=4)
-            msg = f"Some error when trying to serialize the data:\n{resp_fmt}"
-            raise ValueError(msg)
-
-        data_bytes = resp
+        data_bytes = b""
+        for d in self.data:
+            data_bytes += bytes(d)
         data_bytes = data_bytes.hex()
         data_bytes_list = []
         for i in range(0, len(data_bytes), 2):
@@ -170,11 +139,11 @@ class LinkedAction(Action):
         return bytes_
 
 
-class Transaction(pydantic.BaseModel):
+class RawTransaction(EosioObject):
     """
     Raw Transaction. It can't be sent to the blockchain.
 
-    It becomes a LinkedTransaction when a you link it to a Net object
+    It becomes a LinkedTransaction when a Net is linked
 
     actions: list[Action]
     delay_sec: int = 0
@@ -193,11 +162,7 @@ class Transaction(pydantic.BaseModel):
         new_v = tuple(v)
         return new_v
 
-    def link(self, *, net: Net):  # block_id: str, chain_id: str):
-        net_info = net.get_info()
-        block_id = net_info["last_irreversible_block_id"]
-        chain_id = net_info["chain_id"]
-
+    def link(self, *, block_id: str, chain_id: str):
         ref_block_num, ref_block_prefix = ueosio.get_tapos_info(
             block_id=block_id
         )
@@ -206,8 +171,7 @@ class Transaction(pydantic.BaseModel):
         )
 
         new_trans = LinkedTransaction(
-            actions=[a.link(net) for a in self.actions],
-            net=net,
+            actions=self.actions,
             expiration_delay_sec=self.expiration_delay_sec,
             delay_sec=self.delay_sec,
             max_cpu_usage_ms=self.max_cpu_usage_ms,
@@ -220,21 +184,14 @@ class Transaction(pydantic.BaseModel):
 
         return new_trans
 
-    class Config:
-        extra = "forbid"
-        frozen = True
-        arbitrary_types_allowed = True
 
-
-class LinkedTransaction(Transaction):
+class LinkedTransaction(RawTransaction):
     """
     Linked transaction. It can't be sent to the blockchain.
 
     It becomes a SignedTransaction when you sign it.
     """
 
-    actions: pydantic.conlist(LinkedAction, min_items=1, max_items=10)
-    net: Net
     chain_id: str
     ref_block_num: str
     ref_block_prefix: str
@@ -279,7 +236,6 @@ class LinkedTransaction(Transaction):
         signature = sign_bytes(bytes_, key)
         signs.append(signature)
         trans = SignedTransaction(
-            net=self.net,
             actions=self.actions,
             expiration_delay_sec=self.expiration_delay_sec,
             delay_sec=self.delay_sec,
@@ -331,17 +287,12 @@ class SignedTransaction(LinkedTransaction):
         bytes_ = bytes(self)
         return bytes_.hex()
 
-    def send(self):
-        resp = self.net.push_transaction(transaction=self)
-        return resp
-
 
 __all__ = [
-    "Data",
     "Action",
-    "LinkedAction",
     "Authorization",
-    "Transaction",
+    "Data",
+    "RawTransaction",
     "LinkedTransaction",
     "SignedTransaction",
 ]
