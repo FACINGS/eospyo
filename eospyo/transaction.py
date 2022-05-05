@@ -1,6 +1,3 @@
-"""Transaction, Authorization and Action classes."""
-
-
 import datetime as dt
 import hashlib
 import json
@@ -11,7 +8,7 @@ import pydantic
 import ueosio
 
 from . import types
-
+from .net import Net
 
 class EosioObject(pydantic.BaseModel, ABC):
     class Config:
@@ -112,7 +109,34 @@ class Action(EosioObject):
     def transform_to_tuple(cls, v):
         new_v = tuple(v)
         return new_v
+    
+    #
+    def link(self, net: Net):
+        return LinkedAction(
+            account=self.account,
+            name=self.name,
+            authorization=self.authorization,
+            data=self.data,
+            net=net,
+        )
+    #
 
+class LinkedAction(Action):
+    """
+    Action to be used in LinkedTransaction.
+
+    account: str
+    name: str
+    data: list[Data]
+    authorization: list[Authorization]
+    """
+
+    account: pydantic.constr(max_length=13)
+    name: str
+    authorization: pydantic.conlist(Authorization, min_items=1, max_items=10)
+    data: List[Data]
+    net: Net
+    
     def __bytes__(self):
         bytes_ = b""
         account_name = types.Name(value=self.account)
@@ -139,7 +163,7 @@ class Action(EosioObject):
         return bytes_
 
 
-class RawTransaction(EosioObject):
+class Transaction(EosioObject):
     """
     Raw Transaction. It can't be sent to the blockchain.
 
@@ -162,7 +186,13 @@ class RawTransaction(EosioObject):
         new_v = tuple(v)
         return new_v
 
-    def link(self, *, block_id: str, chain_id: str):
+    #def link(self, *, block_id: str, chain_id: str):
+    #
+    def link(self, *, net: Net):  # block_id: str, chain_id: str):
+        net_info = net.get_info()
+        block_id = net_info["last_irreversible_block_id"]
+        chain_id = net_info["chain_id"]
+        #
         ref_block_num, ref_block_prefix = ueosio.get_tapos_info(
             block_id=block_id
         )
@@ -171,7 +201,11 @@ class RawTransaction(EosioObject):
         )
 
         new_trans = LinkedTransaction(
-            actions=self.actions,
+            #actions=self.actions,
+            #
+            actions=[a.link(net) for a in self.actions],
+            net=net,
+            #
             expiration_delay_sec=self.expiration_delay_sec,
             delay_sec=self.delay_sec,
             max_cpu_usage_ms=self.max_cpu_usage_ms,
@@ -185,13 +219,16 @@ class RawTransaction(EosioObject):
         return new_trans
 
 
-class LinkedTransaction(RawTransaction):
+class LinkedTransaction(Transaction):
     """
     Linked transaction. It can't be sent to the blockchain.
 
     It becomes a SignedTransaction when you sign it.
     """
-
+    #
+    actions: pydantic.conlist(LinkedAction, min_items=1, max_items=10)
+    net: Net
+    #
     chain_id: str
     ref_block_num: str
     ref_block_prefix: str
@@ -236,6 +273,9 @@ class LinkedTransaction(RawTransaction):
         signature = sign_bytes(bytes_, key)
         signs.append(signature)
         trans = SignedTransaction(
+            #
+            net=self.net,
+            #
             actions=self.actions,
             expiration_delay_sec=self.expiration_delay_sec,
             delay_sec=self.delay_sec,
@@ -287,12 +327,18 @@ class SignedTransaction(LinkedTransaction):
         bytes_ = bytes(self)
         return bytes_.hex()
 
+    #
+    def send(self):
+        resp = self.net.push_transaction(transaction=self)
+        return resp
+    #
 
 __all__ = [
     "Action",
     "Authorization",
     "Data",
-    "RawTransaction",
+    "Transaction",
     "LinkedTransaction",
     "SignedTransaction",
+    "LinkedAction",
 ]
