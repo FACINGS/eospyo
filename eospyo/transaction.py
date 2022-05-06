@@ -4,7 +4,6 @@
 import datetime as dt
 import hashlib
 import json
-from abc import ABC
 from typing import List
 
 import pydantic
@@ -14,13 +13,7 @@ from . import types
 from .net import Net
 
 
-class EosioObject(pydantic.BaseModel, ABC):
-    class Config:
-        extra = "forbid"
-        frozen = True
-
-
-class Authorization(EosioObject):
+class Authorization(pydantic.BaseModel):
     """
     Authorization to be used in Action.
 
@@ -39,8 +32,12 @@ class Authorization(EosioObject):
         bytes_ += bytes(permission)
         return bytes_
 
+    class Config:
+        extra = "forbid"
+        frozen = True
 
-class Data(EosioObject):
+
+class Data(pydantic.BaseModel):
     """
     Data to be used in actions.
 
@@ -93,8 +90,12 @@ class Data(EosioObject):
     def __bytes__(self):
         return bytes(self.value)
 
+    class Config:
+         extra = "forbid"
+         frozen = True
 
-class Action(EosioObject):
+
+class Action(pydantic.BaseModel):
     """
     Action to be used in Transaction.
 
@@ -123,6 +124,16 @@ class Action(EosioObject):
             data=self.data,
             net=net,
         )
+
+    def __bytes__(self):
+        name = self.__class__.__name__
+        raise TypeError(f"cannot convert '{name}' object to bytes")
+
+    class Config:
+        extra = "forbid"
+        frozen = True
+        arbitrary_types_allowed = True
+
 
 class LinkedAction(Action):
     """
@@ -166,7 +177,7 @@ class LinkedAction(Action):
         return bytes_
 
 
-class Transaction(EosioObject):
+class Transaction(pydantic.BaseModel):
     """
     Raw Transaction. It can't be sent to the blockchain.
 
@@ -218,6 +229,12 @@ class Transaction(EosioObject):
         )
 
         return new_trans
+    
+    class Config:
+        extra = "forbid"
+        frozen = True
+        arbitrary_types_allowed = True
+
 
 
 class LinkedTransaction(Transaction):
