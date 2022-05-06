@@ -1,3 +1,6 @@
+"""Transaction, Authorization and Action classes."""
+
+
 import datetime as dt
 import hashlib
 import json
@@ -9,6 +12,7 @@ import ueosio
 
 from . import types
 from .net import Net
+
 
 class EosioObject(pydantic.BaseModel, ABC):
     class Config:
@@ -110,7 +114,7 @@ class Action(EosioObject):
         new_v = tuple(v)
         return new_v
     
-    #
+    #returns a LinkedAction with current values additionaly with a specificed net value
     def link(self, net: Net):
         return LinkedAction(
             account=self.account,
@@ -119,7 +123,6 @@ class Action(EosioObject):
             data=self.data,
             net=net,
         )
-    #
 
 class LinkedAction(Action):
     """
@@ -186,13 +189,12 @@ class Transaction(EosioObject):
         new_v = tuple(v)
         return new_v
 
-    #def link(self, *, block_id: str, chain_id: str):
-    #
+    #used to link transaction to a specified network (net), gets required info from net then returns a LinkedTransaction with current info
     def link(self, *, net: Net):  # block_id: str, chain_id: str):
         net_info = net.get_info()
         block_id = net_info["last_irreversible_block_id"]
         chain_id = net_info["chain_id"]
-        #
+
         ref_block_num, ref_block_prefix = ueosio.get_tapos_info(
             block_id=block_id
         )
@@ -201,11 +203,10 @@ class Transaction(EosioObject):
         )
 
         new_trans = LinkedTransaction(
-            #actions=self.actions,
-            #
+            #load every action as a linkedAction with the net passed in
             actions=[a.link(net) for a in self.actions],
             net=net,
-            #
+
             expiration_delay_sec=self.expiration_delay_sec,
             delay_sec=self.delay_sec,
             max_cpu_usage_ms=self.max_cpu_usage_ms,
@@ -225,10 +226,9 @@ class LinkedTransaction(Transaction):
 
     It becomes a SignedTransaction when you sign it.
     """
-    #
+
     actions: pydantic.conlist(LinkedAction, min_items=1, max_items=10)
     net: Net
-    #
     chain_id: str
     ref_block_num: str
     ref_block_prefix: str
@@ -273,9 +273,7 @@ class LinkedTransaction(Transaction):
         signature = sign_bytes(bytes_, key)
         signs.append(signature)
         trans = SignedTransaction(
-            #
             net=self.net,
-            #
             actions=self.actions,
             expiration_delay_sec=self.expiration_delay_sec,
             delay_sec=self.delay_sec,
@@ -327,11 +325,9 @@ class SignedTransaction(LinkedTransaction):
         bytes_ = bytes(self)
         return bytes_.hex()
 
-    #
     def send(self):
         resp = self.net.push_transaction(transaction=self)
         return resp
-    #
 
 __all__ = [
     "Action",
