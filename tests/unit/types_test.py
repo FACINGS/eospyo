@@ -3,9 +3,12 @@ import datetime as dt
 import pydantic
 import pytest
 
+import eospyo
 from eospyo import types
 
 values = [
+    (types.Bool, True, b"\x01"),
+    (types.Bool, False, b"\x00"),
     (types.Int8, -128, b"\x80"),
     (types.Int8, -127, b"\x81"),
     (types.Int8, -1, b"\xFF"),
@@ -45,6 +48,10 @@ values = [
     (types.Name, "zzzzzzzzzzzzj", b"\xff\xff\xff\xff\xff\xff\xff\xff"),
     (types.Name, "kacjndfvdfa", b"\x00\xccJ{\xa5\xf9\x90\x81"),
     (types.Name, "user2", b"\x00\x00\x00\x00\x00q\x15\xd6"),
+    (types.String, "a", b"\x01a"),
+    (types.String, "A", b"\x01A"),
+    (types.String, "kcjansdcd", b"\tkcjansdcd"),
+    (types.String, "", b"\x00"),
     (types.UnixTimestamp, dt.datetime(1970, 1, 1, 0, 0), b"\x00\x00\x00\x00"),
     (
         types.UnixTimestamp,
@@ -87,7 +94,11 @@ def test_bytes_to_type(class_, input_, expected_output):
 
 @pytest.mark.parametrize("class_,input_,expected_output", values)
 def test_size(class_, input_, expected_output):
-    if class_ is types.Varuint32:
+    has_len = {
+        types.Varuint32,
+        types.String,
+    }
+    if class_ in has_len:
         instance = class_(input_)
         bytes_ = bytes(instance)
         assert len(instance) == len(bytes_)
@@ -95,6 +106,8 @@ def test_size(class_, input_, expected_output):
 
 test_serialization = [
     ("name", "testname", "hrforxogkfjv"),
+    ("string", "teststring", "hrforxogkfjv"),
+    ("string", "teststring", "Lorem Ipsum " * 10),
     ("int8", "tinteight", -128),
     ("int8", "tinteight", -127),
     ("int8", "tinteight", 0),
@@ -120,6 +133,19 @@ test_serialization = [
     ("uint64", "tuintsixfour", 2 ** 64 - 2),
     ("uint64", "tuintsixfour", 2 ** 64 - 1),
 ]
+
+@pytest.mark.parametrize("type_,action, value", test_serialization)
+def test_abi_vs_eospyo_serialization(net, type_, action, value):
+    data_as_dict = dict(name="var", value=value, type=type_)
+    data = eospyo.Data.parse_obj(data_as_dict)
+    eospyo_data_bytes = bytes(data)
+
+    nodeos_action_bytes = net.abi_json_to_bin(
+        account_name="user2",
+        action=action,
+        json={"var": value},
+    )
+    assert eospyo_data_bytes == nodeos_action_bytes
 
 
 error_values = [
