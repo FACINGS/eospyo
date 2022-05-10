@@ -68,6 +68,36 @@ class UnixTimestamp(EosioType):
         return cls(value=datetime)
 
 
+class Bool(EosioType):
+    value: bool
+
+    def __bytes__(self):
+        return b"\x01" if self.value else b"\x00"
+
+    @classmethod
+    def from_bytes(cls, bytes_):
+        return cls(value=int(bytes_[:1].hex(), 16))
+
+
+class String(EosioType):
+    value: str
+
+    def __bytes__(self):
+        bytes_ = self.value.encode("utf8")
+        # length = len(self.value)
+        length = len(bytes_)
+        bytes_ = bytes(Varuint32(value=length)) + bytes_
+        return bytes_
+
+    @classmethod
+    def from_bytes(cls, bytes_):
+        size = Varuint32.from_bytes(bytes_)
+        start = len(size)
+        string_bytes = bytes_[start : start + size.value]  # NOQA: E203
+        value = string_bytes.decode("utf8")
+        return cls(value=value)
+
+
 class Bytes(EosioType):
     value: bytes
 
