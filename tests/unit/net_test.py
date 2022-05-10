@@ -199,7 +199,13 @@ def test_when_get_table_by_scope_with_no_contract_then_rows_are_empty(net):
 @pytest.mark.flaky(reruns=2)
 def test_when_get_table_by_scope_with_contract_then_rows_have_objects(net):
     # send a transaction just for the table to be created
-    data = {"from": "user2", "message": "hello"}
+    #data = {"from": "user2", "message": "hello"}
+    data = [
+        eospyo.Data(name="from", value=eospyo.types.Name("user2")),
+        eospyo.Data(
+            name="message",
+            value=eospyo.types.String("hello"),
+        ),]
     trans = eospyo.Transaction(
         actions=[
             eospyo.Action(
