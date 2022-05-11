@@ -61,6 +61,33 @@ def test_when_create_data_from_dict_with_len_4_then_raises_value_error():
         eospyo.Data.parse_obj(d)
 
 
+def test_backend_serialization_matches_server_serialization(net):
+    data=[
+            eospyo.Data(name="from", value=eospyo.types.Name("user2")),
+            eospyo.Data(
+                name="message",
+                value=eospyo.types.String("hello"),
+            ),
+        ]
+    backend_data_bytes = b""
+    for d in data:
+            backend_data_bytes += bytes(d)
+
+    server_resp = net.abi_json_to_bin(
+            account_name="user2",
+            action="sendmsg",
+            json= {"from": "user2", "message": "hello",}
+        )
+    if isinstance(server_resp, dict):
+        resp_fmt = json.dumps(resp, indent=4)
+        msg = f"Some error when trying to serialize the data:\n{resp_fmt}"
+        raise ValueError(msg)
+
+    server_data_bytes = server_resp
+
+    assert backend_data_bytes == server_data_bytes
+
+
 def test_data_bytes_hex_return_expected_value():
     data = [
         eospyo.Data(name="from", value=eospyo.types.Name("youraccount1")),
