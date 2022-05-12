@@ -84,10 +84,19 @@ class String(EosioType):
 
     def __bytes__(self):
         bytes_ = self.value.encode("utf8")
-        # length = len(self.value)
         length = len(bytes_)
+        # length = len(self.value)
         bytes_ = bytes(Varuint32(value=length)) + bytes_
         return bytes_
+
+    @pydantic.validator("value")
+    def must_not_contain_multi_utf_char(cls, v):
+        if len(v) < len(v.encode("utf8")):
+                msg = (
+                    "Input "+v+" has a multi-byte utf character in it, currently eospyo does not support serialization of multi-byte utf characters."
+                )
+                raise ValueError(msg)
+        return v
 
     @classmethod
     def from_bytes(cls, bytes_):
