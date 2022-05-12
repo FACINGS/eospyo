@@ -108,6 +108,7 @@ test_serialization = [
     ("name", "testname", "hrforxogkfjv"),
     ("string", "teststring", "hrforxogkfjv"),
     ("string", "teststring", "Lorem Ipsum " * 10),
+    ("string", "teststring", "!\"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~ "),
     ("int8", "tinteight", -128),
     ("int8", "tinteight", -127),
     ("int8", "tinteight", 0),
@@ -120,7 +121,8 @@ test_serialization = [
     ("uint16", "tuintsixteen", 0),
     ("uint16", "tuintsixteen", 1),
     ("uint16", "tuintsixteen", 2),
-    ("uint16", "tuintsixteen", 2),
+    ("uint16", "tuintsixteen", 2 ** 16 - 2),
+    ("uint16", "tuintsixteen", 2 ** 16 - 1),
     ("uint32", "tuintthirtwo", 0),
     ("uint32", "tuintthirtwo", 1),
     ("uint32", "tuintthirtwo", 10800),
@@ -170,6 +172,28 @@ error_values = [
     (types.Name, "............z"),
     (types.Varuint32, -1),
     (types.Varuint32, 20989371980),
+
+    #utf 2 byte char 
+    (types.String, "µ"),
+    (types.String, "aµ"),
+    (types.String, "µa"),
+    (types.String, "aµa"),
+
+    #utf 3 byte char 
+    (types.String, "ࢠ"),
+    (types.String, "aࢠ"),
+    (types.String, "ࢠa"),
+
+    #utf 4 byte char 
+    (types.String, "𒀀"),
+    (types.String, "a𒀀"),
+    (types.String, "𒀀a"),
+
+    #additional utf 4 byte char 
+    (types.String, "🤎"),
+    (types.String, "a🤎"),
+    (types.String, "🤎a"),
+
 ]
 
 
