@@ -13,8 +13,7 @@ Its main usage today is to send transactions to the blockchain
 - Statically typed  
 This library enforces and verifies types and values.
 - Serialization  
-**eospyo** serializes the transaction before sending to the blockchain.  
-However it doesn't serialize the data field.  
+**eospyo** serializes the transaction before sending to the blockchain, However, due to a bug concerning the serialization of multi-utf8 byte characters, any input containing multi-utf8 byte characters will raise an error.
 - Paralellization  
 Although python has the [GIL](https://realpython.com/python-gil/) we try to make as easier as possible to paralellize the jobs.  
 All data is as immutable and all functions are as pure as we can make them.  
@@ -32,34 +31,34 @@ Just `pip install eospyo` and play around.
 (we don't support, and have no plans to support [conda](https://docs.conda.io/en/latest/))  
 Rather then starting with long docs, just a simple example:  
 
-### Use AtomicAssets transfer action
-```
-import json
 
+## Use Send Message action
+```
 import eospyo
 
-print("Create Transaction")
-data = {
-    "from": "facings",
-    "to": "youraccount",
-    "asset_ids": [123],
-    "memo": "FACINGS to the moon",
-}
 
-auth = eospyo.Authorization(
-    actor="facings",
-    permission="active",
-)
+print("Create Transaction")
+data=[
+    eospyo.Data(
+        name="from",
+        value=eospyo.types.Name("me.wam"), 
+    ),
+    eospyo.Data(
+        name="message",
+         value=eospyo.types.String("hello from eospyo"),
+    ),
+]
+
+auth = eospyo.Authorization(actor="me.wam", permission="active")
 
 action = eospyo.Action(
-    account="atomicassets",  # this is the contract account
-    name="transfer",  # this is the action name
+    account="me.wam", # this is the contract account
+    name="sendmsg", # this is the action name
     data=data,
     authorization=[auth],
 )
 
 raw_transaction = eospyo.Transaction(actions=[action])
-
 
 print("Link transaction to the network")
 net = eospyo.WaxTestnet()  # this is an alias for a testnet node

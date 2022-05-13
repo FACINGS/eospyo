@@ -2,11 +2,21 @@
 
 import eospyo
 
-data = {
-    "voter": "me.wam",
-    "proxy": "",
-    "producers": ["eosiodetroit"],
-}
+
+data = [
+    eospyo.Data(
+        name="voter",
+        value=eospyo.types.Name("me.wam"),
+    ),
+    eospyo.Data(
+        name="proxy",
+        value=eospyo.types.Name(""),
+    ),
+    eospyo.Data(
+        name="producers",
+        value=eospyo.types.Array(type_=eospyo.types.Name, values=["eosiodetroit"]),
+    ),
+]
 
 auth = eospyo.Authorization(actor="me.wam", permission="active")
 
