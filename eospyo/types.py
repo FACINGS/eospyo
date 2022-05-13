@@ -166,7 +166,7 @@ class Name(EosioType):
     # regex = has at least one "non-dot" char
     value: pydantic.constr(
         max_length=13,
-        regex=r"^[\.a-z1-5]*[a-z1-5]+[\.a-z1-5]*$",  # NOQA: F722
+        regex=r"^[\.a-z1-5]*[a-z1-5]+[\.a-z1-5]*$|^(?![\s\S])",  # NOQA: F722
     )
 
     def __eq__(self, other):
