@@ -78,10 +78,6 @@ def test_backend_serialization_matches_server_serialization(net):
             action="sendmsg",
             json= {"from": "user2", "message": "hello",}
         )
-    if isinstance(server_resp, dict):
-        resp_fmt = json.dumps(resp, indent=4)
-        msg = f"Some error when trying to serialize the data:\n{resp_fmt}"
-        raise ValueError(msg)
 
     server_data_bytes = server_resp
 
