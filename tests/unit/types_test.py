@@ -48,6 +48,7 @@ values = [
     (types.Name, "zzzzzzzzzzzzj", b"\xff\xff\xff\xff\xff\xff\xff\xff"),
     (types.Name, "kacjndfvdfa", b"\x00\xccJ{\xa5\xf9\x90\x81"),
     (types.Name, "user2", b"\x00\x00\x00\x00\x00q\x15\xd6"),
+    (types.Name, "", b'\x00\x00\x00\x00\x00\x00\x00\x00'),
     (types.String, "a", b"\x01a"),
     (types.String, "A", b"\x01A"),
     (types.String, "kcjansdcd", b"\tkcjansdcd"),
@@ -106,9 +107,11 @@ def test_size(class_, input_, expected_output):
 
 test_serialization = [
     ("name", "testname", "hrforxogkfjv"),
+    ("name", "testname", ""),
     ("string", "teststring", "hrforxogkfjv"),
     ("string", "teststring", "Lorem Ipsum " * 10),
     ("string", "teststring", "!\"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~ "),
+    ("string", "teststring", ""),
     ("int8", "tinteight", -128),
     ("int8", "tinteight", -127),
     ("int8", "tinteight", 0),
