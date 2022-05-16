@@ -85,7 +85,6 @@ class String(EosioType):
     def __bytes__(self):
         bytes_ = self.value.encode("utf8")
         length = len(bytes_)
-        # length = len(self.value)
         bytes_ = bytes(Varuint32(value=length)) + bytes_
         return bytes_
 

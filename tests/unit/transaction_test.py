@@ -321,7 +321,6 @@ def test_e2e_with_transaction_ok(net):
     assert resp["processed"]["receipt"]["status"] == "executed"
     actions = resp["processed"]["action_traces"]
     assert len(actions) == 1
-    #assert actions[0]["act"]["data"] == data
 
 
 def test_e2e_with_transaction_signed_with_the_wrong_key(net):
