@@ -62,22 +62,25 @@ def test_when_create_data_from_dict_with_len_4_then_raises_value_error():
 
 
 def test_backend_serialization_matches_server_serialization(net):
-    data=[
-            eospyo.Data(name="from", value=eospyo.types.Name("user2")),
-            eospyo.Data(
-                name="message",
-                value=eospyo.types.String("hello"),
-            ),
-        ]
+    data = [
+        eospyo.Data(name="from", value=eospyo.types.Name("user2")),
+        eospyo.Data(
+            name="message",
+            value=eospyo.types.String("hello"),
+        ),
+    ]
     backend_data_bytes = b""
     for d in data:
-            backend_data_bytes += bytes(d)
+        backend_data_bytes += bytes(d)
 
     server_resp = net.abi_json_to_bin(
-            account_name="user2",
-            action="sendmsg",
-            json= {"from": "user2", "message": "hello",}
-        )
+        account_name="user2",
+        action="sendmsg",
+        json={
+            "from": "user2",
+            "message": "hello",
+        },
+    )
 
     server_data_bytes = server_resp
 
@@ -124,16 +127,18 @@ def test_action_requirest_at_least_one_auth():
             authorization=[],
         )
 
+
 def test_when_action_link_returns_linked_action(net):
     action = eospyo.Action(
         account="user2",
         name="sendmsg",
-        data = [
-        eospyo.Data(name="from", value=eospyo.types.Name("user1")),
-        eospyo.Data(
-            name="message",
-            value=eospyo.types.String("msg sent using eospyo"),
-        ),],
+        data=[
+            eospyo.Data(name="from", value=eospyo.types.Name("user1")),
+            eospyo.Data(
+                name="message",
+                value=eospyo.types.String("msg sent using eospyo"),
+            ),
+        ],
         authorization=[
             eospyo.Authorization(actor="user1", permission="active"),
         ],
@@ -207,7 +212,7 @@ def example_transaction(net):
         ],
     )
     linked_trans = eospyo.LinkedTransaction(
-        actions = [action.link(net)],
+        actions=[action.link(net)],
         net=net,
         expiration_delay_sec=0,
         delay_sec=0,
@@ -290,7 +295,8 @@ def test_e2e_with_transaction_ok(net):
         eospyo.Data(
             name="message",
             value=eospyo.types.String("hello"),
-        ),]
+        ),
+    ]
     trans = eospyo.Transaction(
         actions=[
             eospyo.Action(
@@ -325,7 +331,8 @@ def test_e2e_with_transaction_signed_with_the_wrong_key(net):
         eospyo.Data(
             name="message",
             value=eospyo.types.String("I cant say hello"),
-        ),]
+        ),
+    ]
     trans = eospyo.Transaction(
         actions=[
             eospyo.Action(

@@ -21,26 +21,26 @@ values = [
     (types.Uint8, 255, b"\xFF"),
     (types.Uint16, 0, b"\x00\x00"),
     (types.Uint16, 1, b"\x01\x00"),
-    (types.Uint16, 2 ** 16 - 2, b"\xFE\xFF"),
-    (types.Uint16, 2 ** 16 - 1, b"\xFF\xFF"),
+    (types.Uint16, 2**16 - 2, b"\xFE\xFF"),
+    (types.Uint16, 2**16 - 1, b"\xFF\xFF"),
     (types.Uint32, 0, b"\x00\x00\x00\x00"),
     (types.Uint32, 1, b"\x01\x00\x00\x00"),
     (types.Uint32, 10800, b"0*\x00\x00"),
     (types.Uint32, 10800, b"\x30\x2a\x00\x00"),
     (types.Uint32, 123456, b"@\xe2\x01\x00"),
-    (types.Uint32, 2 ** 32 - 2, b"\xFE\xFF\xFF\xFF"),
-    (types.Uint32, 2 ** 32 - 1, b"\xFF\xFF\xFF\xFF"),
+    (types.Uint32, 2**32 - 2, b"\xFE\xFF\xFF\xFF"),
+    (types.Uint32, 2**32 - 1, b"\xFF\xFF\xFF\xFF"),
     (types.Uint64, 0, b"\x00\x00\x00\x00\x00\x00\x00\x00"),
     (types.Uint64, 1, b"\x01\x00\x00\x00\x00\x00\x00\x00"),
-    (types.Uint64, 2 ** 64 - 2, b"\xFE\xFF\xFF\xFF\xFF\xFF\xFF\xFF"),
-    (types.Uint64, 2 ** 64 - 1, b"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"),
+    (types.Uint64, 2**64 - 2, b"\xFE\xFF\xFF\xFF\xFF\xFF\xFF\xFF"),
+    (types.Uint64, 2**64 - 1, b"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"),
     (types.Varuint32, 0, b"\x00"),
     (types.Varuint32, 1, b"\x01"),
     (types.Varuint32, 3, b"\x03"),
-    (types.Varuint32, 2 ** 8 - 1, b"\xFF\x01"),
-    (types.Varuint32, 2 ** 8, b"\x80\x02"),
-    (types.Varuint32, 2 ** 32 - 1, b"\xFF\xFF\xFF\xFF\x0F"),
-    (types.Varuint32, 2 ** 32, b"\x80\x80\x80\x80\x10"),
+    (types.Varuint32, 2**8 - 1, b"\xFF\x01"),
+    (types.Varuint32, 2**8, b"\x80\x02"),
+    (types.Varuint32, 2**32 - 1, b"\xFF\xFF\xFF\xFF\x0F"),
+    (types.Varuint32, 2**32, b"\x80\x80\x80\x80\x10"),
     (types.Varuint32, 20989371979, b"\xcb\xcc\xc1\x98N"),
     (types.Name, "a", b"\x00\x00\x00\x00\x00\x00\x000"),
     (types.Name, "a.", b"\x00\x00\x00\x00\x00\x00\x000"),
@@ -48,7 +48,7 @@ values = [
     (types.Name, "zzzzzzzzzzzzj", b"\xff\xff\xff\xff\xff\xff\xff\xff"),
     (types.Name, "kacjndfvdfa", b"\x00\xccJ{\xa5\xf9\x90\x81"),
     (types.Name, "user2", b"\x00\x00\x00\x00\x00q\x15\xd6"),
-    (types.Name, "", b'\x00\x00\x00\x00\x00\x00\x00\x00'),
+    (types.Name, "", b"\x00\x00\x00\x00\x00\x00\x00\x00"),
     (types.String, "a", b"\x01a"),
     (types.String, "A", b"\x01A"),
     (types.String, "kcjansdcd", b"\tkcjansdcd"),
@@ -110,7 +110,11 @@ test_serialization = [
     ("name", "testname", ""),
     ("string", "teststring", "hrforxogkfjv"),
     ("string", "teststring", "Lorem Ipsum " * 10),
-    ("string", "teststring", "!\"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~ "),
+    (
+        "string",
+        "teststring",
+        "!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~ ",
+    ),
     ("string", "teststring", ""),
     ("int8", "tinteight", -128),
     ("int8", "tinteight", -127),
@@ -124,20 +128,21 @@ test_serialization = [
     ("uint16", "tuintsixteen", 0),
     ("uint16", "tuintsixteen", 1),
     ("uint16", "tuintsixteen", 2),
-    ("uint16", "tuintsixteen", 2 ** 16 - 2),
-    ("uint16", "tuintsixteen", 2 ** 16 - 1),
+    ("uint16", "tuintsixteen", 2**16 - 2),
+    ("uint16", "tuintsixteen", 2**16 - 1),
     ("uint32", "tuintthirtwo", 0),
     ("uint32", "tuintthirtwo", 1),
     ("uint32", "tuintthirtwo", 10800),
     ("uint32", "tuintthirtwo", 10800),
     ("uint32", "tuintthirtwo", 123456),
-    ("uint32", "tuintthirtwo", 2 ** 32 - 2),
-    ("uint32", "tuintthirtwo", 2 ** 32 - 1),
+    ("uint32", "tuintthirtwo", 2**32 - 2),
+    ("uint32", "tuintthirtwo", 2**32 - 1),
     ("uint64", "tuintsixfour", 0),
     ("uint64", "tuintsixfour", 1),
-    ("uint64", "tuintsixfour", 2 ** 64 - 2),
-    ("uint64", "tuintsixfour", 2 ** 64 - 1),
+    ("uint64", "tuintsixfour", 2**64 - 2),
+    ("uint64", "tuintsixfour", 2**64 - 1),
 ]
+
 
 @pytest.mark.parametrize("type_,action, value", test_serialization)
 def test_abi_vs_eospyo_serialization(net, type_, action, value):
@@ -159,12 +164,12 @@ error_values = [
     (types.Uint8, -1),
     (types.Uint8, 256),
     (types.Uint16, -1),
-    (types.Uint16, 2 ** 16),
+    (types.Uint16, 2**16),
     (types.Uint32, -1),
-    (types.Uint32, 2 ** 32),
+    (types.Uint32, 2**32),
     (types.Uint64, -1),
-    (types.Uint64, 2 ** 64),
-    #(types.Name, ""),
+    (types.Uint64, 2**64),
+    # (types.Name, ""),
     (types.Name, "A"),
     (types.Name, "z" * 14),
     (types.Name, "á"),
@@ -175,28 +180,23 @@ error_values = [
     (types.Name, "............z"),
     (types.Varuint32, -1),
     (types.Varuint32, 20989371980),
-
-    #utf 2 byte char 
+    # utf 2 byte char
     (types.String, "µ"),
     (types.String, "aµ"),
     (types.String, "µa"),
     (types.String, "aµa"),
-
-    #utf 3 byte char 
+    # utf 3 byte char
     (types.String, "ࢠ"),
     (types.String, "aࢠ"),
     (types.String, "ࢠa"),
-
-    #utf 4 byte char 
+    # utf 4 byte char
     (types.String, "𒀀"),
     (types.String, "a𒀀"),
     (types.String, "𒀀a"),
-
-    #additional utf 4 byte char 
+    # additional utf 4 byte char
     (types.String, "🤎"),
     (types.String, "a🤎"),
     (types.String, "🤎a"),
-
 ]
 
 
@@ -214,7 +214,7 @@ array_values = [
     ),
     (
         types.Varuint32,
-        [0, 2 ** 8, 2 ** 16, 2 ** 4],
+        [0, 2**8, 2**16, 2**4],
         b"\x04\x00\x80\x02\x80\x80\x04\x10",
     ),
 ]

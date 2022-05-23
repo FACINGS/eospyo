@@ -91,8 +91,8 @@ class Data(pydantic.BaseModel):
         return bytes(self.value)
 
     class Config:
-         extra = "forbid"
-         frozen = True
+        extra = "forbid"
+        frozen = True
 
 
 class Action(pydantic.BaseModel):
@@ -114,8 +114,8 @@ class Action(pydantic.BaseModel):
     def transform_to_tuple(cls, v):
         new_v = tuple(v)
         return new_v
-    
-    #returns a LinkedAction with current values additionaly with a specificed net value
+
+    # returns a LinkedAction with current values and a specificed net value
     def link(self, net: Net):
         return LinkedAction(
             account=self.account,
@@ -150,7 +150,7 @@ class LinkedAction(Action):
     authorization: pydantic.conlist(Authorization, min_items=1, max_items=10)
     data: List[Data]
     net: Net
-    
+
     def __bytes__(self):
         bytes_ = b""
         account_name = types.Name(value=self.account)
@@ -200,7 +200,8 @@ class Transaction(pydantic.BaseModel):
         new_v = tuple(v)
         return new_v
 
-    #used to link transaction to a specified network (net), gets required info from net then returns a LinkedTransaction with current info
+    # used to link transaction to a specified network (net)
+    # gets required info from net then returns a LinkedTransaction
     def link(self, *, net: Net):  # block_id: str, chain_id: str):
         net_info = net.get_info()
         block_id = net_info["last_irreversible_block_id"]
@@ -214,10 +215,9 @@ class Transaction(pydantic.BaseModel):
         )
 
         new_trans = LinkedTransaction(
-            #load every action as a linkedAction with the net passed in
+            # load every action as a linkedAction with the net passed in
             actions=[a.link(net) for a in self.actions],
             net=net,
-
             expiration_delay_sec=self.expiration_delay_sec,
             delay_sec=self.delay_sec,
             max_cpu_usage_ms=self.max_cpu_usage_ms,
@@ -229,12 +229,11 @@ class Transaction(pydantic.BaseModel):
         )
 
         return new_trans
-    
+
     class Config:
         extra = "forbid"
         frozen = True
         arbitrary_types_allowed = True
-
 
 
 class LinkedTransaction(Transaction):
@@ -345,6 +344,7 @@ class SignedTransaction(LinkedTransaction):
     def send(self):
         resp = self.net.push_transaction(transaction=self)
         return resp
+
 
 __all__ = [
     "Action",

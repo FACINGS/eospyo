@@ -91,10 +91,12 @@ class String(EosioType):
     @pydantic.validator("value")
     def must_not_contain_multi_utf_char(cls, v):
         if len(v) < len(v.encode("utf8")):
-                msg = (
-                    "Input "+v+" has a multi-byte utf character in it, currently eospyo does not support serialization of multi-byte utf characters."
-                )
-                raise ValueError(msg)
+            msg = (
+                f'Input "{v}" has a multi-byte utf character in it, '
+                "currently eospyo does not support serialization of "
+                "multi-byte utf characters."
+            )
+            raise ValueError(msg)
         return v
 
     @classmethod

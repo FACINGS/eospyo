@@ -204,7 +204,8 @@ def test_when_get_table_by_scope_with_contract_then_rows_have_objects(net):
         eospyo.Data(
             name="message",
             value=eospyo.types.String("hello"),
-        ),]
+        ),
+    ]
     trans = eospyo.Transaction(
         actions=[
             eospyo.Action(
