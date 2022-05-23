@@ -9,7 +9,7 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.8"
 pydantic = "^1.9.0"
-httpx = "^0.22.0"
+httpx = ">=0.22"
 ueosio = "^0.2.6"
 
 [tool.poetry.dev-dependencies]
