@@ -68,6 +68,44 @@ class UnixTimestamp(EosioType):
         return cls(value=datetime)
 
 
+class Bool(EosioType):
+    value: bool
+
+    def __bytes__(self):
+        return b"\x01" if self.value else b"\x00"
+
+    @classmethod
+    def from_bytes(cls, bytes_):
+        return cls(value=int(bytes_[:1].hex(), 16))
+
+
+class String(EosioType):
+    value: str
+
+    def __bytes__(self):
+        bytes_ = self.value.encode("utf8")
+        length = len(bytes_)
+        bytes_ = bytes(Varuint32(value=length)) + bytes_
+        return bytes_
+
+    @pydantic.validator("value")
+    def must_not_contain_multi_utf_char(cls, v):
+        if len(v) < len(v.encode("utf8")):
+                msg = (
+                    "Input "+v+" has a multi-byte utf character in it, currently eospyo does not support serialization of multi-byte utf characters."
+                )
+                raise ValueError(msg)
+        return v
+
+    @classmethod
+    def from_bytes(cls, bytes_):
+        size = Varuint32.from_bytes(bytes_)
+        start = len(size)
+        string_bytes = bytes_[start : start + size.value]  # NOQA: E203
+        value = string_bytes.decode("utf8")
+        return cls(value=value)
+
+
 class Bytes(EosioType):
     value: bytes
 
@@ -127,7 +165,7 @@ class Name(EosioType):
     # regex = has at least one "non-dot" char
     value: pydantic.constr(
         max_length=13,
-        regex=r"^[\.a-z1-5]*[a-z1-5]+[\.a-z1-5]*$",  # NOQA: F722
+        regex=r"^[\.a-z1-5]*[a-z1-5]+[\.a-z1-5]*$|^(?![\s\S])",  # NOQA: F722
     )
 
     def __eq__(self, other):

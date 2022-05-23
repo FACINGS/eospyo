@@ -8,14 +8,13 @@ This library is heavily influenced (and still uses some pieces of code from) by 
 
 
 # Main features
-- Send transactions  
+- <ins>Send transactions</ins>  
 Its main usage today is to send transactions to the blockchain
-- Statically typed  
+- <ins>Statically typed</ins>  
 This library enforces and verifies types and values.
-- Serialization  
-**eospyo** serializes the transaction before sending to the blockchain.  
-However it doesn't serialize the data field.  
-- Paralellization  
+- <ins>Serialization</ins>  
+**eospyo** serializes the transaction before sending to the blockchain. 
+- <ins>Paralellization</ins>  
 Although python has the [GIL](https://realpython.com/python-gil/) we try to make as easier as possible to paralellize the jobs.  
 All data is as immutable and all functions are as pure as we can make them.  
 
@@ -32,34 +31,34 @@ Just `pip install eospyo` and play around.
 (we don't support, and have no plans to support [conda](https://docs.conda.io/en/latest/))  
 Rather then starting with long docs, just a simple example:  
 
-### Use AtomicAssets transfer action
-```
-import json
 
+## Use Send Message action
+```
 import eospyo
 
-print("Create Transaction")
-data = {
-    "from": "facings",
-    "to": "youraccount",
-    "asset_ids": [123],
-    "memo": "FACINGS to the moon",
-}
 
-auth = eospyo.Authorization(
-    actor="facings",
-    permission="active",
-)
+print("Create Transaction")
+data=[
+    eospyo.Data(
+        name="from",
+        value=eospyo.types.Name("me.wam"), 
+    ),
+    eospyo.Data(
+        name="message",
+         value=eospyo.types.String("hello from eospyo"),
+    ),
+]
+
+auth = eospyo.Authorization(actor="me.wam", permission="active")
 
 action = eospyo.Action(
-    account="atomicassets",  # this is the contract account
-    name="transfer",  # this is the action name
+    account="me.wam", # this is the contract account
+    name="sendmsg", # this is the action name
     data=data,
     authorization=[auth],
 )
 
 raw_transaction = eospyo.Transaction(actions=[action])
-
 
 print("Link transaction to the network")
 net = eospyo.WaxTestnet()  # this is an alias for a testnet node
@@ -86,6 +85,8 @@ There are some other examples [here](./examples)
 # Known bugs
 ### Keys not working
 - Some keys are reported to not work. However this error was not replicated and the cause remains unknown. If you can share a key pair that is not working it would be very helpful.
+### multi-byte utf-8 characters can not be serialized
+- Serialization of multi-byte utf-8 characters is somewhat unpredictable in the current implementation, therfore any String input containing multi-utf8 byte characters will be blocked for the time being.
 
 
 # Contributing

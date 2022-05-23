@@ -3,9 +3,12 @@ import datetime as dt
 import pydantic
 import pytest
 
+import eospyo
 from eospyo import types
 
 values = [
+    (types.Bool, True, b"\x01"),
+    (types.Bool, False, b"\x00"),
     (types.Int8, -128, b"\x80"),
     (types.Int8, -127, b"\x81"),
     (types.Int8, -1, b"\xFF"),
@@ -45,6 +48,11 @@ values = [
     (types.Name, "zzzzzzzzzzzzj", b"\xff\xff\xff\xff\xff\xff\xff\xff"),
     (types.Name, "kacjndfvdfa", b"\x00\xccJ{\xa5\xf9\x90\x81"),
     (types.Name, "user2", b"\x00\x00\x00\x00\x00q\x15\xd6"),
+    (types.Name, "", b'\x00\x00\x00\x00\x00\x00\x00\x00'),
+    (types.String, "a", b"\x01a"),
+    (types.String, "A", b"\x01A"),
+    (types.String, "kcjansdcd", b"\tkcjansdcd"),
+    (types.String, "", b"\x00"),
     (types.UnixTimestamp, dt.datetime(1970, 1, 1, 0, 0), b"\x00\x00\x00\x00"),
     (
         types.UnixTimestamp,
@@ -87,7 +95,11 @@ def test_bytes_to_type(class_, input_, expected_output):
 
 @pytest.mark.parametrize("class_,input_,expected_output", values)
 def test_size(class_, input_, expected_output):
-    if class_ is types.Varuint32:
+    has_len = {
+        types.Varuint32,
+        types.String,
+    }
+    if class_ in has_len:
         instance = class_(input_)
         bytes_ = bytes(instance)
         assert len(instance) == len(bytes_)
@@ -95,6 +107,11 @@ def test_size(class_, input_, expected_output):
 
 test_serialization = [
     ("name", "testname", "hrforxogkfjv"),
+    ("name", "testname", ""),
+    ("string", "teststring", "hrforxogkfjv"),
+    ("string", "teststring", "Lorem Ipsum " * 10),
+    ("string", "teststring", "!\"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~ "),
+    ("string", "teststring", ""),
     ("int8", "tinteight", -128),
     ("int8", "tinteight", -127),
     ("int8", "tinteight", 0),
@@ -107,7 +124,8 @@ test_serialization = [
     ("uint16", "tuintsixteen", 0),
     ("uint16", "tuintsixteen", 1),
     ("uint16", "tuintsixteen", 2),
-    ("uint16", "tuintsixteen", 2),
+    ("uint16", "tuintsixteen", 2 ** 16 - 2),
+    ("uint16", "tuintsixteen", 2 ** 16 - 1),
     ("uint32", "tuintthirtwo", 0),
     ("uint32", "tuintthirtwo", 1),
     ("uint32", "tuintthirtwo", 10800),
@@ -121,6 +139,19 @@ test_serialization = [
     ("uint64", "tuintsixfour", 2 ** 64 - 1),
 ]
 
+@pytest.mark.parametrize("type_,action, value", test_serialization)
+def test_abi_vs_eospyo_serialization(net, type_, action, value):
+    data_as_dict = dict(name="var", value=value, type=type_)
+    data = eospyo.Data.parse_obj(data_as_dict)
+    eospyo_data_bytes = bytes(data)
+
+    nodeos_action_bytes = net.abi_json_to_bin(
+        account_name="user2",
+        action=action,
+        json={"var": value},
+    )
+    assert eospyo_data_bytes == nodeos_action_bytes
+
 
 error_values = [
     (types.Int8, -129),
@@ -133,7 +164,7 @@ error_values = [
     (types.Uint32, 2 ** 32),
     (types.Uint64, -1),
     (types.Uint64, 2 ** 64),
-    (types.Name, ""),
+    #(types.Name, ""),
     (types.Name, "A"),
     (types.Name, "z" * 14),
     (types.Name, "á"),
@@ -144,6 +175,28 @@ error_values = [
     (types.Name, "............z"),
     (types.Varuint32, -1),
     (types.Varuint32, 20989371980),
+
+    #utf 2 byte char 
+    (types.String, "µ"),
+    (types.String, "aµ"),
+    (types.String, "µa"),
+    (types.String, "aµa"),
+
+    #utf 3 byte char 
+    (types.String, "ࢠ"),
+    (types.String, "aࢠ"),
+    (types.String, "ࢠa"),
+
+    #utf 4 byte char 
+    (types.String, "𒀀"),
+    (types.String, "a𒀀"),
+    (types.String, "𒀀a"),
+
+    #additional utf 4 byte char 
+    (types.String, "🤎"),
+    (types.String, "a🤎"),
+    (types.String, "🤎a"),
+
 ]
 
 

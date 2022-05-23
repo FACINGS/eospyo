@@ -4,6 +4,7 @@
 import datetime as dt
 import hashlib
 import json
+from typing import List
 
 import pydantic
 import ueosio
@@ -36,41 +37,62 @@ class Authorization(pydantic.BaseModel):
         frozen = True
 
 
-class Data:
-    __frozen = False
+class Data(pydantic.BaseModel):
+    """
+    Data to be used in actions.
 
-    def __init__(self, **kwargs):
-        self._d = kwargs
-        self.__frozen = True
+    name: the data field name
+    value: the typed value (types.EosioType) of the data
+    """
 
-    def __getattr__(self, value):
-        return self._d[value]
+    name: str
+    value: types.EosioType
 
-    def __setattr__(self, attr, value):
-        if self.__frozen is True:
-            raise TypeError("Cannot modify value of 'Data'")
-        self.__dict__[attr] = value
-
-    def __delattr__(self, attr):
-        if self.__frozen is True:
-            raise TypeError("Cannot modify value of 'Data'")
-        del self.__dict__[attr]
+    def __init__(self, *args, **kwargs):
+        if len(args) == 1:
+            if isinstance(args[0], dict):
+                self = self.parse_obj(args[0])
+                return
+        super().__init__(*args, **kwargs)
 
     @classmethod
-    def from_dict(cls, obj):
-        return cls(**obj)
+    def parse_obj(self, obj):
+        for field in ["name", "type", "value"]:
+            if field not in obj:
+                msg = f"Field {field} expected. {obj}"
+                raise ValueError(msg)
+        if len(obj) != 3:
+            msg = (
+                f"Object with lenght 3 was expected, but {len(obj)} "
+                f"found: {obj}"
+            )
+            raise ValueError(msg)
+        name = obj["name"]
+        type_str = obj["type"]
+        value_raw = obj["value"]
+        type_obj = types.from_string(type_str)
+        value = type_obj(value_raw)
+        return Data(name=name, value=value)
 
     def dict(self):
-        return self._d
+        d = dict(
+            name=self.name,
+            type=self.value.__class__.__name__,
+            value=self.value.value,
+        )
+        return d
 
     def json(self):
-        return json.dumps(self._d)
+        d = self.dict()
+        j = json.dumps(d)
+        return j
 
-    def __hash__(self):
-        return hash("Data" + self.json())
+    def __bytes__(self):
+        return bytes(self.value)
 
-    def __eq__(self, other):
-        return hash(self) == hash(other)
+    class Config:
+         extra = "forbid"
+         frozen = True
 
 
 class Action(pydantic.BaseModel):
@@ -79,28 +101,21 @@ class Action(pydantic.BaseModel):
 
     account: str
     name: str
-    data: list[dict]
-    authorization: list[Authorization]
+    data: list[Data]
+    authorization: list[Action]
     """
 
     account: pydantic.constr(max_length=13)
     name: str
     authorization: pydantic.conlist(Authorization, min_items=1, max_items=10)
-    data: Data
+    data: List[Data]
 
-    @pydantic.validator("data", pre=True)
-    def transform_to_data(cls, v):
-        if isinstance(v, dict):
-            return Data.from_dict(v)
-        elif v is None:
-            return Data()
-        return v
-
-    @pydantic.validator("authorization")
+    @pydantic.validator("data", "authorization")
     def transform_to_tuple(cls, v):
         new_v = tuple(v)
         return new_v
-
+    
+    #returns a LinkedAction with current values additionaly with a specificed net value
     def link(self, net: Net):
         return LinkedAction(
             account=self.account,
@@ -133,9 +148,9 @@ class LinkedAction(Action):
     account: pydantic.constr(max_length=13)
     name: str
     authorization: pydantic.conlist(Authorization, min_items=1, max_items=10)
-    data: Data
+    data: List[Data]
     net: Net
-
+    
     def __bytes__(self):
         bytes_ = b""
         account_name = types.Name(value=self.account)
@@ -147,17 +162,9 @@ class LinkedAction(Action):
         auth = types.Array(type_=types.Bytes, values=auth_bytes)
         bytes_ += bytes(auth)
 
-        resp = self.net.abi_json_to_bin(
-            account_name=self.account,
-            action=self.name,
-            json=self.data.dict(),
-        )
-        if isinstance(resp, dict):
-            resp_fmt = json.dumps(resp, indent=4)
-            msg = f"Some error when trying to serialize the data:\n{resp_fmt}"
-            raise ValueError(msg)
-
-        data_bytes = resp
+        data_bytes = b""
+        for d in self.data:
+            data_bytes += bytes(d)
         data_bytes = data_bytes.hex()
         data_bytes_list = []
         for i in range(0, len(data_bytes), 2):
@@ -174,7 +181,7 @@ class Transaction(pydantic.BaseModel):
     """
     Raw Transaction. It can't be sent to the blockchain.
 
-    It becomes a LinkedTransaction when a you link it to a Net object
+    It becomes a LinkedTransaction when a Net is linked
 
     actions: list[Action]
     delay_sec: int = 0
@@ -193,6 +200,7 @@ class Transaction(pydantic.BaseModel):
         new_v = tuple(v)
         return new_v
 
+    #used to link transaction to a specified network (net), gets required info from net then returns a LinkedTransaction with current info
     def link(self, *, net: Net):  # block_id: str, chain_id: str):
         net_info = net.get_info()
         block_id = net_info["last_irreversible_block_id"]
@@ -206,8 +214,10 @@ class Transaction(pydantic.BaseModel):
         )
 
         new_trans = LinkedTransaction(
+            #load every action as a linkedAction with the net passed in
             actions=[a.link(net) for a in self.actions],
             net=net,
+
             expiration_delay_sec=self.expiration_delay_sec,
             delay_sec=self.delay_sec,
             max_cpu_usage_ms=self.max_cpu_usage_ms,
@@ -219,11 +229,12 @@ class Transaction(pydantic.BaseModel):
         )
 
         return new_trans
-
+    
     class Config:
         extra = "forbid"
         frozen = True
         arbitrary_types_allowed = True
+
 
 
 class LinkedTransaction(Transaction):
@@ -335,13 +346,12 @@ class SignedTransaction(LinkedTransaction):
         resp = self.net.push_transaction(transaction=self)
         return resp
 
-
 __all__ = [
-    "Data",
     "Action",
-    "LinkedAction",
     "Authorization",
+    "Data",
     "Transaction",
     "LinkedTransaction",
     "SignedTransaction",
+    "LinkedAction",
 ]

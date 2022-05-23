@@ -29,67 +29,81 @@ def test_authorization_is_immutable(auth):
         auth.actor = "bbb"
 
 
-def test_create_data_from_dict():
-    d = eospyo.Data.from_dict({"from": "user1"})
-    assert isinstance(d, eospyo.Data)
+def test_data_dict_serialization():
+    data = eospyo.Data(name="int_value", value=eospyo.types.Int8(10))
+    data_json = data.dict()
+    assert data_json == {"name": "int_value", "type": "Int8", "value": 10}
 
 
-def test_create_data_with_args():
-    d = eospyo.Data(name="user1")
-    assert isinstance(d, eospyo.Data)
+def test_data_json_serialization():
+    data = eospyo.Data(name="int_value", value=eospyo.types.Int8(10))
+    data_json = data.json()
+    assert data_json == '{"name": "int_value", "type": "Int8", "value": 10}'
 
 
-def test_create_data_from_dict_return_name():
-    d1 = eospyo.Data.from_dict({"name": "user1"})
-    assert d1.name == "user1"
+def test_create_data_from_dict_with_len_3():
+    data_from_dict = eospyo.Data.parse_obj(
+        {"name": "int_value", "type": "Int8", "value": 10}
+    )
+    data_from_init = eospyo.Data(name="int_value", value=eospyo.types.Int8(10))
+    assert data_from_dict == data_from_init
 
 
-def test_data_to_dict():
-    expected = {"name": "user1"}
-    data = eospyo.Data.from_dict(expected)
-    data_dict = data.dict()
-    assert data_dict == expected
+def test_when_create_data_from_dict_with_len_1_then_raises_value_error():
+    d = {"name": "int_value"}
+    with pytest.raises(ValueError):
+        eospyo.Data.parse_obj(d)
 
 
-def test_create_data_from_dict_equals_from_args():
-    d1 = eospyo.Data.from_dict({"name": "user1"})
-    d2 = eospyo.Data(name="user1")
-    assert d1 == d2
+def test_when_create_data_from_dict_with_len_4_then_raises_value_error():
+    d = {"name": "int_value", "type": "Int8", "value": 10, "a": "a"}
+    with pytest.raises(ValueError):
+        eospyo.Data.parse_obj(d)
 
 
-def test_data_hash_equality_with_same_keys_and_values():
-    d1 = eospyo.Data.from_dict({"from": "user1"})
-    d2 = eospyo.Data.from_dict({"from": "user1"})
-    assert hash(d1) == hash(d2)
+def test_backend_serialization_matches_server_serialization(net):
+    data=[
+            eospyo.Data(name="from", value=eospyo.types.Name("user2")),
+            eospyo.Data(
+                name="message",
+                value=eospyo.types.String("hello"),
+            ),
+        ]
+    backend_data_bytes = b""
+    for d in data:
+            backend_data_bytes += bytes(d)
+
+    server_resp = net.abi_json_to_bin(
+            account_name="user2",
+            action="sendmsg",
+            json= {"from": "user2", "message": "hello",}
+        )
+
+    server_data_bytes = server_resp
+
+    assert backend_data_bytes == server_data_bytes
 
 
-def test_data_equality_with_same_keys_and_values():
-    d1 = eospyo.Data.from_dict({"from": "user1"})
-    d2 = eospyo.Data.from_dict({"from": "user1"})
-    assert d1 == d2
-
-
-def test_data_equality_with_diff_keys():
-    d1 = eospyo.Data.from_dict({"from": "user1"})
-    d2 = eospyo.Data.from_dict({"from1": "user1"})
-    assert d1 != d2
-
-
-def test_data_equality_with_same_keys_but_diff_values():
-    d1 = eospyo.Data.from_dict({"from": "user1"})
-    d2 = eospyo.Data.from_dict({"from": "user2"})
-    assert d1 != d2
-
-
-def test_data_is_immutable():
-    d = eospyo.Data.from_dict({"field": "user1"})
-    with pytest.raises(TypeError):
-        d.field = "sldkmcsd"
+def test_data_bytes_hex_return_expected_value():
+    data = [
+        eospyo.Data(name="from", value=eospyo.types.Name("youraccount1")),
+        eospyo.Data(name="to", value=eospyo.types.Name("argentinaeos")),
+        eospyo.Data(
+            name="memo",
+            value=eospyo.types.String(" This tx was sent using EOSIO"),
+        ),
+    ]
+    data_bytes = [bytes(d) for d in data]
+    data = eospyo.types.Array(type_=eospyo.types.Bytes, values=data_bytes)
+    bytes_ = bytes(data)
+    action_hex = bytes_.hex()
+    expected = "0310f2d414217335f580a932d3e5a9d8351d2054686973207478207761732073656e74207573696e6720454f53494f"  # NOQA: E501
+    assert action_hex == expected
 
 
 def test_create_action():
     auth = [eospyo.Authorization(actor="user2", permission="active")]
-    data = {}
+    data = []
 
     action = eospyo.Action(
         account="user2",
@@ -106,19 +120,20 @@ def test_action_requirest_at_least_one_auth():
         eospyo.Action(
             account="user2",
             name="clear",
-            data={},
+            data=[],
             authorization=[],
         )
-
 
 def test_when_action_link_returns_linked_action(net):
     action = eospyo.Action(
         account="user2",
         name="sendmsg",
-        data={
-            "from": "user1",
-            "message": "msg sent using eospyo",
-        },
+        data = [
+        eospyo.Data(name="from", value=eospyo.types.Name("user1")),
+        eospyo.Data(
+            name="message",
+            value=eospyo.types.String("msg sent using eospyo"),
+        ),],
         authorization=[
             eospyo.Authorization(actor="user1", permission="active"),
         ],
@@ -130,7 +145,7 @@ def test_when_action_link_returns_linked_action(net):
 @pytest.fixture
 def action_clear():
     auth = [eospyo.Authorization(actor="user2", permission="active")]
-    data = {}
+    data = []
     action = eospyo.Action(
         account="user2",
         name="clear",
@@ -141,7 +156,7 @@ def action_clear():
 
 
 def test_action_fields_are_immutable(action_clear):
-    immutables = (str, int, bool, float, tuple, eospyo.Data)
+    immutables = (str, int, bool, float, tuple)
     for field_name in action_clear.__fields__:
         field = getattr(action_clear, field_name)
         assert isinstance(field, immutables)
@@ -180,17 +195,20 @@ def example_transaction(net):
         net=net,
         account="user2",
         name="sendmsg",
-        data={
-            "from": "user2",
-            "message": "hello",
-        },
+        data=[
+            eospyo.Data(name="from", value=eospyo.types.Name("user2")),
+            eospyo.Data(
+                name="message",
+                value=eospyo.types.String("hello"),
+            ),
+        ],
         authorization=[
             eospyo.Authorization(actor="user2", permission="active"),
         ],
     )
     linked_trans = eospyo.LinkedTransaction(
+        actions = [action.link(net)],
         net=net,
-        actions=[action],
         expiration_delay_sec=0,
         delay_sec=0,
         max_cpu_usage_ms=0,
@@ -267,7 +285,12 @@ def test_when_send_example_transaction_then_returns_expired_transaction_error(
 
 @pytest.mark.flaky(reruns=2)
 def test_e2e_with_transaction_ok(net):
-    data = {"from": "user2", "message": "hello"}
+    data = [
+        eospyo.Data(name="from", value=eospyo.types.Name("user2")),
+        eospyo.Data(
+            name="message",
+            value=eospyo.types.String("hello"),
+        ),]
     trans = eospyo.Transaction(
         actions=[
             eospyo.Action(
@@ -294,11 +317,15 @@ def test_e2e_with_transaction_ok(net):
     assert resp["processed"]["receipt"]["status"] == "executed"
     actions = resp["processed"]["action_traces"]
     assert len(actions) == 1
-    assert actions[0]["act"]["data"] == data
 
 
 def test_e2e_with_transaction_signed_with_the_wrong_key(net):
-    data = {"from": "user2", "message": "I cant say hello"}
+    data = [
+        eospyo.Data(name="from", value=eospyo.types.Name("user2")),
+        eospyo.Data(
+            name="message",
+            value=eospyo.types.String("I cant say hello"),
+        ),]
     trans = eospyo.Transaction(
         actions=[
             eospyo.Action(
