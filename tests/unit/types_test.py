@@ -74,6 +74,18 @@ values = [
         dt.datetime(2021, 8, 26, 14, 1, 47, 184549),
         b"\xCB\x9E\x27\x61",
     ),
+    
+    # minumum amount of characters
+    (types.Symbol, "0,W", b"\x00W\x00\x00\x00\x00\x00\x00"),
+    # maximum amount of characters
+    (types.Symbol, "0,WAXXXXX", b"\x00WAXXXXX"),
+    # 1 precision
+    (types.Symbol, "1,WAX", b"\x01WAX\x00\x00\x00\x00"),
+    # max precision (16)
+    (types.Symbol, "16,WAX", b"\x10WAX\x00\x00\x00\x00"),
+
+    (types.Asset, "99.9 WAX", b"\xe7\x03\x00\x00\x00\x00\x00\x00\x01WAX\x00\x00\x00\x00")
+
 ]
 
 
@@ -197,6 +209,30 @@ error_values = [
     (types.String, "🤎"),
     (types.String, "a🤎"),
     (types.String, "🤎a"),
+
+    (types.Symbol, "0,WAXXXXXX"),
+    (types.Symbol, "0,"),
+    (types.Symbol, "0, "),
+    (types.Symbol, ","),
+
+    (types.Symbol, "17,WAX"),
+    (types.Symbol, "-1,WAX"),
+
+    #min and max amount
+    (types.Asset, "0 WAX"),
+    (types.Asset, str((2**64))+" WAX"),
+
+    #min and max name/symbol
+    (types.Asset, "1 "),
+    (types.Asset, "1 WAXXXXXX"),
+
+    #min and max decimal 
+    (types.Asset, "99. WAX"),
+    (types.Asset, "99.-1 WAX"),
+    (types.Asset, "99.11111111111111111 WAX"),
+
+    (types.Asset, "1WAX")
+
 ]
 
 
