@@ -108,6 +108,90 @@ class String(EosioType):
         return cls(value=value)
 
 
+class Asset(EosioType):
+    """
+    Serialize a Asset.
+
+    serializes an currency amount and amount together
+    """
+
+    value: str
+
+    def __bytes__(self):
+        bytes_ = self.value.encode("utf8")
+        length = len(bytes_)
+        bytes_ = bytes(Varuint32(value=length)) + bytes_
+        return bytes_
+
+    @pydantic.validator("value")
+    def must_not_contain_multi_utf_char(cls, v):
+        if len(v) < len(v.encode("utf8")):
+            msg = (
+                f'Input "{v}" has a multi-byte utf character in it, '
+                "currently eospyo does not support serialization of "
+                "multi-byte utf characters."
+            )
+            raise ValueError(msg)
+        return v
+
+    @classmethod
+    def from_bytes(cls, bytes_):
+        size = Varuint32.from_bytes(bytes_)
+        start = len(size)
+        string_bytes = bytes_[start : start + size.value]  # NOQA: E203
+        value = string_bytes.decode("utf8")
+        return cls(value=value)
+
+
+class Symbol(EosioType):
+    """
+    Serialize a Symbol.
+
+    serializes an currency amount and amount together
+    """
+
+    value: str 
+    #precision: str.split(",")[0]
+    #precision: pydantic.conint(ge=0, lt=16)
+    #name: str.split(",")[1]
+    # name: pydantic.constr(
+    #     max_length=7,
+    #     regex=r"^!/^[A-Z]{1,7}$/",  # NOQA: F722
+    # )
+
+    def __bytes__(self):
+        precision = int(self.value.split(",")[0])
+        name = self.value.split(",")[1]
+        precision_bytes_ = struct.pack("<B",(precision & 0xff))
+        bytes_ = precision_bytes_
+        name_bytes_ = name.encode("utf8")
+        bytes_ += name_bytes_
+        leftover_byte_space = len(name)+1
+        while leftover_byte_space < 8:
+            bytes_ += struct.pack("<B",0)
+            leftover_byte_space += 1
+        return bytes_
+
+    # @pydantic.validator("value")
+    # def must_not_contain_multi_utf_char(cls, v):
+    #     if len(v) < len(v.encode("utf8")):
+    #         msg = (
+    #             f'Input "{v}" has a multi-byte utf character in it, '
+    #             "currently eospyo does not support serialization of "
+    #             "multi-byte utf characters."
+    #         )
+    #         raise ValueError(msg)
+    #     return v
+
+    @classmethod
+    def from_bytes(cls, bytes_):
+        size = Varuint32.from_bytes(bytes_)
+        start = len(size)
+        string_bytes = bytes_[start : start + size.value]  # NOQA: E203
+        value = string_bytes.decode("utf8")
+        return cls(value=value)
+
+
 class Bytes(EosioType):
     value: bytes
 
