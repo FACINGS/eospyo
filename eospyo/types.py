@@ -2,6 +2,7 @@
 
 import calendar
 import datetime as dt
+from locale import currency
 import struct
 import sys
 from abc import ABC, abstractmethod
@@ -118,10 +119,46 @@ class Asset(EosioType):
     value: str
 
     def __bytes__(self):
-        bytes_ = self.value.encode("utf8")
-        length = len(bytes_)
-        bytes_ = bytes(Varuint32(value=length)) + bytes_
-        return bytes_
+        stripped_value = self.value.strip()
+        pos = 0
+        amount_string = ''
+
+        #check for negative sign
+        if stripped_value[pos] == '-':
+            amount_string += '-'
+            pos+=1
+
+        found_digit = False
+        curr_char = stripped_value[pos]
+        #get amount value
+        while pos < len(stripped_value) and curr_char >= '0' and curr_char <= '9':
+            found_digit = True
+            amount_string += curr_char
+            pos+=1
+            curr_char = stripped_value[pos]
+        
+        # if not found_digit:
+        #     error
+
+        #get decimal values
+        precision = 0
+        if curr_char == '.':
+            pos += 1
+            curr_char = stripped_value[pos]
+            while pos < len(stripped_value) and curr_char >= '0' and curr_char <= '9':
+                amount_string += curr_char
+                pos+=1
+                curr_char = stripped_value[pos]
+                precision += 1
+
+        amount = Uint64(int(amount_string))
+        currency_name = stripped_value[pos+1:]
+        currency = Symbol(str(precision)+","+currency_name)
+
+        amount_bytes = bytes(amount)
+        symbol_bytes = bytes(currency)
+
+        return amount_bytes + symbol_bytes
 
     @pydantic.validator("value")
     def must_not_contain_multi_utf_char(cls, v):
@@ -151,6 +188,7 @@ class Symbol(EosioType):
     """
 
     value: str 
+
     #precision: str.split(",")[0]
     #precision: pydantic.conint(ge=0, lt=16)
     #name: str.split(",")[1]

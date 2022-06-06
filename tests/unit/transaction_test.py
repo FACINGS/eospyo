@@ -95,7 +95,7 @@ def test_backend_transfer_transaction_serialization(net):
             eospyo.Data(
                 name="quantity",
                 #value=eospyo.types.String("WAX"),
-                value=eospyo.types.Asset("55.00000000 WAX"),
+                value=eospyo.types.Asset("999999.999999 WAXXXXX"),
             ),
             eospyo.Data(
                 name="memo",
@@ -112,8 +112,7 @@ def test_backend_transfer_transaction_serialization(net):
             json = {
                 "from": "user2",
                 "to": "user2",
-                "quantity": "99 WAX",
-                "quantity": "99."+1*("9")+" WAX",
+                "quantity": "999999.999999 WAXXXXX ",
                 "memo": "Trying EosPyo",
             }
         )
