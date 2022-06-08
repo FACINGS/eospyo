@@ -138,21 +138,28 @@ class Asset(EosioType):
             pos+=1
             curr_char = stripped_value[pos]
         
-        # if not found_digit:
-        #     error
+        if not found_digit:
+            raise ValueError("no amount found in Asset")
 
         #get decimal values
         precision = 0
+        
         if curr_char == '.':
+            found_decimal = False
             pos += 1
             curr_char = stripped_value[pos]
             while pos < len(stripped_value) and curr_char >= '0' and curr_char <= '9':
+                found_decimal = True
                 amount_string += curr_char
                 pos+=1
                 curr_char = stripped_value[pos]
                 precision += 1
 
+            if not found_decimal:
+                raise ValueError("If period exists, there must be a decimal value in Asset")
+
         amount = Uint64(int(amount_string))
+
         currency_name = stripped_value[pos+1:]  
         currency = Symbol(str(precision)+","+currency_name)
 
@@ -160,6 +167,16 @@ class Asset(EosioType):
         symbol_bytes = bytes(currency)
 
         return amount_bytes + symbol_bytes
+
+    @pydantic.validator("value")
+    def amount_must_be_in_the_valid_range(cls, v):
+        value_list = str(v).strip().split(' ')
+        if len(value_list) != 2:
+            msg = (
+                f'Input "{v}" must have exactly one space in between amount and name'
+            )
+            raise ValueError(msg)
+        return v
 
     @pydantic.validator("value")
     def must_not_contain_multi_utf_char(cls, v):
@@ -174,10 +191,14 @@ class Asset(EosioType):
 
     @classmethod
     def from_bytes(cls, bytes_):
-        size = Varuint32.from_bytes(bytes_)
-        start = len(size)
-        string_bytes = bytes_[start : start + size.value]  # NOQA: E203
-        value = string_bytes.decode("utf8")
+        amount_bytes = bytes_[:8] # get first 8 bytes
+        asset_precision = bytes_[8] # (amount of decimal places)
+        amount = str(struct.unpack('<Q', amount_bytes)[0]) # amount with decimal values (no decimal splitting yet)
+        name = str(Symbol.from_bytes(bytes_[8:])).split(',')[1][:-1] # get name (currency) from Symbol
+        if asset_precision == 0:
+            value = amount+" "+name 
+        else:
+            value = amount[:-asset_precision]+'.'+amount[asset_precision+1:]+' '+name # combine everything and place decimal in correct position
         return cls(value=value)
 
 
@@ -211,8 +232,6 @@ class Symbol(EosioType):
             raise ValueError(msg)
         return v
         
-
-
     def __bytes__(self):
         precision = int(self.value.split(",")[0])
         name = self.value.split(",")[1]
