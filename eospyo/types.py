@@ -6,6 +6,7 @@ from locale import currency
 import struct
 import sys
 from abc import ABC, abstractmethod
+import re
 
 import pydantic
 
@@ -152,7 +153,7 @@ class Asset(EosioType):
                 precision += 1
 
         amount = Uint64(int(amount_string))
-        currency_name = stripped_value[pos+1:]
+        currency_name = stripped_value[pos+1:]  
         currency = Symbol(str(precision)+","+currency_name)
 
         amount_bytes = bytes(amount)
@@ -184,18 +185,33 @@ class Symbol(EosioType):
     """
     Serialize a Symbol.
 
-    serializes an currency amount and amount together
+    serializes an currency name and amount together
     """
 
     value: str 
 
-    #precision: str.split(",")[0]
-    #precision: pydantic.conint(ge=0, lt=16)
-    #name: str.split(",")[1]
-    # name: pydantic.constr(
-    #     max_length=7,
-    #     regex=r"^!/^[A-Z]{1,7}$/",  # NOQA: F722
-    # )
+    @pydantic.validator("value")
+    def name_must_be_of_valid_length(cls, v):
+        name = v.split(",")[1]
+        match = re.search("^[A-Z]{1,7}$", name)
+        if not match:
+            msg = (
+                f'Input "{name}" must be A-Z and between 1 to 7 characters.'
+            )
+            raise ValueError(msg)
+        return v
+
+    @pydantic.validator("value")
+    def precision_must_be_in_the_valid_range(cls, v):
+        precision = int(v.split(",")[0])
+        if precision < 0 or precision > 16:
+            msg = (
+                f'precision must be between 0 and 16 inclusive.'
+            )
+            raise ValueError(msg)
+        return v
+        
+
 
     def __bytes__(self):
         precision = int(self.value.split(",")[0])
@@ -223,10 +239,20 @@ class Symbol(EosioType):
 
     @classmethod
     def from_bytes(cls, bytes_):
-        size = Varuint32.from_bytes(bytes_)
-        start = len(size)
-        string_bytes = bytes_[start : start + size.value]  # NOQA: E203
-        value = string_bytes.decode("utf8")
+        bytes_len = len(bytes_)
+        precision = ""
+        name = ""
+        for i in range(bytes_len):
+            if chr(bytes_[i]).isupper(): 
+                precision = str(bytes_[0])
+                name_bytes = bytes_[i:] # name is all bytes after precision
+                for k in range(1, len(name_bytes)+1):
+                    if not chr(bytes_[k]).isupper():
+                        name_bytes = name_bytes[:k-1] #name only goes up to the last upper case character
+                name = name_bytes.decode("utf8")
+                break
+
+        value = precision+","+name
         return cls(value=value)
 
 
