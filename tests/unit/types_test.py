@@ -221,7 +221,6 @@ error_values = [
     (types.Symbol, ","),
     (types.Symbol, "17,WAX"),
     (types.Symbol, "-1,WAX"),
-    (types.Asset, "99. WAX"),
     (types.Asset, "1WAX"),
     (types.Asset, "1 1 WAX"),
     (types.Asset, "WAX"),

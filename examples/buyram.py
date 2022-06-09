@@ -4,18 +4,12 @@
 import eospyo
 
 data = [
-    eospyo.Data(
-        name="payer", 
-        value=eospyo.types.Name("me.wam")
-    ),
-    eospyo.Data(
-        name="receiver", 
-        value=eospyo.types.Name("me.wam")
-    ),
+    eospyo.Data(name="payer", value=eospyo.types.Name("me.wam")),
+    eospyo.Data(name="receiver", value=eospyo.types.Name("me.wam")),
     eospyo.Data(
         name="quant",
         value=eospyo.types.Asset("5.00000000 WAX"),
-    )
+    ),
 ]
 
 auth = eospyo.Authorization(actor="me.wam", permission="active")

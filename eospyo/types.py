@@ -185,7 +185,7 @@ class Asset(EosioType):
         value_list = str(v).strip().split(" ")
         if len(value_list) != 2:
             msg = (
-                f'Input "{v}" must have exactly one space in between'
+                f'Input "{v}" must have exactly one space in between '
                 "amount and name"
             )
             raise ValueError(msg)

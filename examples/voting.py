@@ -14,7 +14,9 @@ data = [
     ),
     eospyo.Data(
         name="producers",
-        value=eospyo.types.Array(type_=eospyo.types.Name, values=["eosiodetroit"]),
+        value=eospyo.types.Array(
+            type_=eospyo.types.Name, values=["eosiodetroit"]
+        ),
     ),
 ]
 

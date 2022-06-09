@@ -3,14 +3,8 @@
 import eospyo
 
 data = [
-    eospyo.Data(
-        name="from", 
-        value=eospyo.types.Name("me.wam")
-    ),
-    eospyo.Data(
-        name="receiver", 
-        value=eospyo.types.Name("me.wam")
-    ),
+    eospyo.Data(name="from", value=eospyo.types.Name("me.wam")),
+    eospyo.Data(name="receiver", value=eospyo.types.Name("me.wam")),
     eospyo.Data(
         name="stake_cpu_quantity",
         value=eospyo.types.Asset("15.00000000 WAX"),
@@ -22,7 +16,7 @@ data = [
     eospyo.Data(
         name="transfer",
         value=eospyo.types.Bool(False),
-    )
+    ),
 ]
 
 auth = eospyo.Authorization(actor="me.wam", permission="active")

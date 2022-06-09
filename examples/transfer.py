@@ -3,17 +3,11 @@
 import eospyo
 
 data = [
-    eospyo.Data(
-        name="from", 
-        value=eospyo.types.Name("me.wam")
-    ),
-    eospyo.Data(
-        name="to", 
-        value=eospyo.types.Name("receiver")
-    ),
+    eospyo.Data(name="from", value=eospyo.types.Name("me.wam")),
+    eospyo.Data(name="to", value=eospyo.types.Name("receiver")),
     eospyo.Data(
         name="quantity",
-        value=eospyo.types.Asset("55.00000000 WAXXXXX"),
+        value=eospyo.types.Asset("55.00000000 WAX"),
     ),
     eospyo.Data(
         name="memo",
