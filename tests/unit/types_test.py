@@ -74,20 +74,24 @@ values = [
         dt.datetime(2021, 8, 26, 14, 1, 47, 184549),
         b"\xCB\x9E\x27\x61",
     ),
-    
     # minumum amount of characters
     (types.Symbol, "0,W", b"\x00W\x00\x00\x00\x00\x00\x00"),
     # maximum amount of characters
     (types.Symbol, "0,WAXXXXX", b"\x00WAXXXXX"),
     # 1 precision
     (types.Symbol, "1,WAX", b"\x01WAX\x00\x00\x00\x00"),
-    # max precision (16)
+    # max precision 
     (types.Symbol, "16,WAX", b"\x10WAX\x00\x00\x00\x00"),
-
-    (types.Asset, "99.9 WAX", b"\xe7\x03\x00\x00\x00\x00\x00\x00\x01WAX\x00\x00\x00\x00"),
-
-    (types.Asset, "99 WAX",   b"c\x00\x00\x00\x00\x00\x00\x00\x00WAX\x00\x00\x00\x00")
-
+    (
+        types.Asset,
+        "99.9 WAX",
+        b"\xe7\x03\x00\x00\x00\x00\x00\x00\x01WAX\x00\x00\x00\x00",
+    ),
+    (
+        types.Asset,
+        "99 WAX",
+        b"c\x00\x00\x00\x00\x00\x00\x00\x00WAX\x00\x00\x00\x00",
+    ),
 ]
 
 
@@ -127,7 +131,7 @@ test_serialization = [
     (
         "string",
         "teststring",
-        "!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~ ",
+        "!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~ ", 
     ),
     ("string", "teststring", ""),
     ("int8", "tinteight", -128),
@@ -211,19 +215,16 @@ error_values = [
     (types.String, "🤎"),
     (types.String, "a🤎"),
     (types.String, "🤎a"),
-
     (types.Symbol, "0,WAXXXXXX"),
     (types.Symbol, "0,"),
     (types.Symbol, "0, "),
     (types.Symbol, ","),
-
     (types.Symbol, "17,WAX"),
     (types.Symbol, "-1,WAX"),
-
     (types.Asset, "99. WAX"),
     (types.Asset, "1WAX"),
     (types.Asset, "1 1 WAX"),
-    (types.Asset, "WAX")
+    (types.Asset, "WAX"),
 ]
 
 
