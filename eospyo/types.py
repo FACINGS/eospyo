@@ -2,7 +2,6 @@
 
 import calendar
 import datetime as dt
-from locale import currency
 import struct
 import sys
 from abc import ABC, abstractmethod
@@ -114,7 +113,11 @@ class Asset(EosioType):
     """
     Serialize a Asset.
 
-    serializes an currency amount and amount together
+    serializes an amount (can be a float value) and currency name together
+    uses Symbol type to serialize percision and name of currency,
+    uses Uint64 type to serialize amount
+    amount and name are seperated by one space
+    example: 50.1 WAX
     """
 
     value: str
@@ -122,46 +125,55 @@ class Asset(EosioType):
     def __bytes__(self):
         stripped_value = self.value.strip()
         pos = 0
-        amount_string = ''
+        amount_string = ""
 
-        #check for negative sign
-        if stripped_value[pos] == '-':
-            amount_string += '-'
-            pos+=1
+        # check for negative sign
+        if stripped_value[pos] == "-":
+            amount_string += "-"
+            pos += 1
 
         found_digit = False
         curr_char = stripped_value[pos]
-        #get amount value
-        while pos < len(stripped_value) and curr_char >= '0' and curr_char <= '9':
+
+        # get amount value
+        while (
+            pos < len(stripped_value) and curr_char >= "0" and curr_char <= "9"
+        ):
             found_digit = True
             amount_string += curr_char
-            pos+=1
+            pos += 1
             curr_char = stripped_value[pos]
-        
+
         if not found_digit:
             raise ValueError("no amount found in Asset")
 
-        #get decimal values
+        # get decimal values
         precision = 0
-        
-        if curr_char == '.':
+
+        if curr_char == ".":
             found_decimal = False
             pos += 1
             curr_char = stripped_value[pos]
-            while pos < len(stripped_value) and curr_char >= '0' and curr_char <= '9':
+            while (
+                pos < len(stripped_value)
+                and curr_char >= "0"
+                and curr_char <= "9"
+            ):
                 found_decimal = True
                 amount_string += curr_char
-                pos+=1
+                pos += 1
                 curr_char = stripped_value[pos]
                 precision += 1
 
             if not found_decimal:
-                raise ValueError("If period exists, there must be a decimal value in Asset")
+                raise ValueError(
+                    "If period exists, there must be a decimal value in Asset"
+                )
 
         amount = Uint64(int(amount_string))
 
-        currency_name = stripped_value[pos+1:]  
-        currency = Symbol(str(precision)+","+currency_name)
+        currency_name = stripped_value[pos + 1:]
+        currency = Symbol(str(precision) + "," + currency_name)
 
         amount_bytes = bytes(amount)
         symbol_bytes = bytes(currency)
@@ -170,35 +182,35 @@ class Asset(EosioType):
 
     @pydantic.validator("value")
     def amount_must_be_in_the_valid_range(cls, v):
-        value_list = str(v).strip().split(' ')
+        value_list = str(v).strip().split(" ")
         if len(value_list) != 2:
             msg = (
-                f'Input "{v}" must have exactly one space in between amount and name'
-            )
-            raise ValueError(msg)
-        return v
-
-    @pydantic.validator("value")
-    def must_not_contain_multi_utf_char(cls, v):
-        if len(v) < len(v.encode("utf8")):
-            msg = (
-                f'Input "{v}" has a multi-byte utf character in it, '
-                "currently eospyo does not support serialization of "
-                "multi-byte utf characters."
+                f'Input "{v}" must have exactly one space in between'
+                "amount and name"
             )
             raise ValueError(msg)
         return v
 
     @classmethod
     def from_bytes(cls, bytes_):
-        amount_bytes = bytes_[:8] # get first 8 bytes
-        asset_precision = bytes_[8] # (amount of decimal places)
-        amount = str(struct.unpack('<Q', amount_bytes)[0]) # amount with decimal values (no decimal splitting yet)
-        name = str(Symbol.from_bytes(bytes_[8:])).split(',')[1][:-1] # get name (currency) from Symbol
+        amount_bytes = bytes_[:8]  # get first 8 bytes
+        asset_precision = bytes_[8]  # (amount of decimal places)
+        amount = str(
+            struct.unpack("<Q", amount_bytes)[0]
+        )  # amount with decimal values (no decimal splitting yet)
+        name = str(Symbol.from_bytes(bytes_[8:])).split(",")[1][
+            :-1
+        ]  # get name (currency) from Symbol
         if asset_precision == 0:
-            value = amount+" "+name 
+            value = amount + " " + name
         else:
-            value = amount[:-asset_precision]+'.'+amount[asset_precision+1:]+' '+name # combine everything and place decimal in correct position
+            value = (
+                amount[:-asset_precision]
+                + "."
+                + amount[asset_precision + 1:]
+                + " "
+                + name
+            )  # combine everything and place decimal in correct position
         return cls(value=value)
 
 
@@ -206,19 +218,21 @@ class Symbol(EosioType):
     """
     Serialize a Symbol.
 
-    serializes an currency name and amount together
+    serializes a percision and currency name together
+    precision is used to indicate how many decimals there
+    are in an Asset type amount
+    precision and name are seperated by a commma
+    example: 1,WAX
     """
 
-    value: str 
+    value: str
 
     @pydantic.validator("value")
     def name_must_be_of_valid_length(cls, v):
         name = v.split(",")[1]
         match = re.search("^[A-Z]{1,7}$", name)
         if not match:
-            msg = (
-                f'Input "{name}" must be A-Z and between 1 to 7 characters.'
-            )
+            msg = f'Input "{name}" must be A-Z and between 1 to 7 characters.'
             raise ValueError(msg)
         return v
 
@@ -227,34 +241,26 @@ class Symbol(EosioType):
         precision = int(v.split(",")[0])
         if precision < 0 or precision > 16:
             msg = (
-                f'precision must be between 0 and 16 inclusive.'
+                f'precision "{precision}" must be between 0 and '
+                "16 inclusive."
             )
             raise ValueError(msg)
         return v
-        
+
     def __bytes__(self):
         precision = int(self.value.split(",")[0])
-        name = self.value.split(",")[1]
-        precision_bytes_ = struct.pack("<B",(precision & 0xff))
+        precision_bytes_ = struct.pack("<B", (precision & 0xFF))
         bytes_ = precision_bytes_
+        name = self.value.split(",")[1]
         name_bytes_ = name.encode("utf8")
         bytes_ += name_bytes_
-        leftover_byte_space = len(name)+1
-        while leftover_byte_space < 8:
-            bytes_ += struct.pack("<B",0)
+        leftover_byte_space = len(name) + 1
+        while (
+            leftover_byte_space < 8
+        ):  # add null bytes in remaining empty space
+            bytes_ += struct.pack("<B", 0)
             leftover_byte_space += 1
         return bytes_
-
-    # @pydantic.validator("value")
-    # def must_not_contain_multi_utf_char(cls, v):
-    #     if len(v) < len(v.encode("utf8")):
-    #         msg = (
-    #             f'Input "{v}" has a multi-byte utf character in it, '
-    #             "currently eospyo does not support serialization of "
-    #             "multi-byte utf characters."
-    #         )
-    #         raise ValueError(msg)
-    #     return v
 
     @classmethod
     def from_bytes(cls, bytes_):
@@ -262,16 +268,18 @@ class Symbol(EosioType):
         precision = ""
         name = ""
         for i in range(bytes_len):
-            if chr(bytes_[i]).isupper(): 
+            if chr(bytes_[i]).isupper():
                 precision = str(bytes_[0])
-                name_bytes = bytes_[i:] # name is all bytes after precision
-                for k in range(1, len(name_bytes)+1):
+                name_bytes = bytes_[i:]  # name is all bytes after precision
+                for k in range(1, len(name_bytes) + 1):
                     if not chr(bytes_[k]).isupper():
-                        name_bytes = name_bytes[:k-1] #name only goes up to the last upper case character
+                        name_bytes = name_bytes[
+                            : k - 1
+                        ]  # name only goes up to the last upper case character
                 name = name_bytes.decode("utf8")
                 break
 
-        value = precision+","+name
+        value = precision + "," + name
         return cls(value=value)
 
 
