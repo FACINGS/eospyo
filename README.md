@@ -8,13 +8,13 @@ This library is heavily influenced (and still uses some pieces of code from) by 
 
 
 # Main features
-- <ins>Send transactions</ins>  
+- Send transactions
 Its main usage today is to send transactions to the blockchain
-- <ins>Statically typed</ins>  
+- Statically typed
 This library enforces and verifies types and values.
-- <ins>Serialization</ins>  
+- Serialization
 **eospyo** serializes the transaction before sending to the blockchain. 
-- <ins>Paralellization</ins>  
+- Paralellization
 Although python has the [GIL](https://realpython.com/python-gil/) we try to make as easier as possible to paralellize the jobs.  
 All data is as immutable and all functions are as pure as we can make them.  
 
