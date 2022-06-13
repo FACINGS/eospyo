@@ -1,10 +1,9 @@
 import datetime as dt
 import json
 
+import eospyo
 import pydantic
 import pytest
-
-import eospyo
 
 
 def test_create_authorization_using_dict():
@@ -79,6 +78,40 @@ def test_backend_serialization_matches_server_serialization(net):
         json={
             "from": "user2",
             "message": "hello",
+        },
+    )
+
+    server_data_bytes = server_resp
+
+    assert backend_data_bytes == server_data_bytes
+
+
+def test_backend_transfer_transaction_serialization(net):
+    net = eospyo.WaxTestnet()
+    data = [
+        eospyo.Data(name="from", value=eospyo.types.Name("user2")),
+        eospyo.Data(name="to", value=eospyo.types.Name("user2")),
+        eospyo.Data(
+            name="quantity",
+            value=eospyo.types.Asset(str(2 ** 61) + " WAX"),
+        ),
+        eospyo.Data(
+            name="memo",
+            value=eospyo.types.String("Trying EosPyo"),
+        ),
+    ]
+    backend_data_bytes = b""
+    for d in data:
+        backend_data_bytes += bytes(d)
+
+    server_resp = net.abi_json_to_bin(
+        account_name="eosio.token",
+        action="transfer",
+        json={
+            "from": "user2",
+            "to": "user2",
+            "quantity": str((2 ** 61)) + " WAX",
+            "memo": "Trying EosPyo",
         },
     )
 

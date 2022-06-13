@@ -1,22 +1,21 @@
-"""Vote to a nice blockproducer ;) ."""
+"""Take cpu to a account."""
 
 import eospyo
 
-
 data = [
+    eospyo.Data(name="from", value=eospyo.types.Name("me.wam")),
+    eospyo.Data(name="receiver", value=eospyo.types.Name("me.wam")),
     eospyo.Data(
-        name="voter",
-        value=eospyo.types.Name("me.wam"),
+        name="stake_cpu_quantity",
+        value=eospyo.types.Asset("15.00000000 WAX"),
     ),
     eospyo.Data(
-        name="proxy",
-        value=eospyo.types.Name(""),
+        name="stake_net_quantity",
+        value=eospyo.types.Asset("30.00000000 WAX"),
     ),
     eospyo.Data(
-        name="producers",
-        value=eospyo.types.Array(
-            type_=eospyo.types.Name, values=["eosiodetroit"]
-        ),
+        name="transfer",
+        value=eospyo.types.Bool(False),
     ),
 ]
 
@@ -24,7 +23,7 @@ auth = eospyo.Authorization(actor="me.wam", permission="active")
 
 action = eospyo.Action(
     account="eosio",
-    name="voteproducer",
+    name="delegatebw",
     data=data,
     authorization=[auth],
 )

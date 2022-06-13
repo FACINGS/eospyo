@@ -1,30 +1,25 @@
-"""Vote to a nice blockproducer ;) ."""
+"""Transfer some WAX to a receiver account."""
 
 import eospyo
 
-
 data = [
+    eospyo.Data(name="from", value=eospyo.types.Name("me.wam")),
+    eospyo.Data(name="to", value=eospyo.types.Name("receiver")),
     eospyo.Data(
-        name="voter",
-        value=eospyo.types.Name("me.wam"),
+        name="quantity",
+        value=eospyo.types.Asset("55.00000000 WAX"),
     ),
     eospyo.Data(
-        name="proxy",
-        value=eospyo.types.Name(""),
-    ),
-    eospyo.Data(
-        name="producers",
-        value=eospyo.types.Array(
-            type_=eospyo.types.Name, values=["eosiodetroit"]
-        ),
+        name="memo",
+        value=eospyo.types.String("Trying EosPyo"),
     ),
 ]
 
 auth = eospyo.Authorization(actor="me.wam", permission="active")
 
 action = eospyo.Action(
-    account="eosio",
-    name="voteproducer",
+    account="eosio.token",
+    name="transfer",
     data=data,
     authorization=[auth],
 )
