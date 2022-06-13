@@ -1,9 +1,10 @@
+"""type tests."""
+
 import datetime as dt
 
+import eospyo
 import pydantic
 import pytest
-
-import eospyo
 from eospyo import types
 
 values = [
@@ -131,7 +132,8 @@ test_serialization = [
     (
         "string",
         "teststring",
-        "!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~ ",
+        "!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]"
+        / "^_`abcdefghijklmnopqrstuvwxyz{|}~ ",
     ),
     ("string", "teststring", ""),
     ("int8", "tinteight", -128),

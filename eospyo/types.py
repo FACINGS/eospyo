@@ -1,13 +1,13 @@
-"""
-Eosio data types.
-"""
+"""Eosio data types."""
+
 import calendar
 import datetime as dt
+import re
 import struct
 import sys
-import re
-import pydantic
 from abc import ABC, abstractmethod
+
+import pydantic
 
 
 class EosioType(pydantic.BaseModel, ABC):
@@ -119,22 +119,25 @@ class Asset(EosioType):
     amount and name are seperated by one space
     example: 50.100000 WAX
     """
+
     value: str
 
     def get_name(self):
-        '''
-        Extracts the name from a raw Asset string
+        """
+        Extract the name from a raw Asset string.
+
         example: "WAX" from Asset string "99.1000000 WAX"
-        '''
+        """
         stripped_value = self.value.strip()
         return stripped_value.split(" ")[1]
 
     def get_int_digits(self):
-        '''
-        Extracts the integer digits (digits before the decimal) 
+        """
+        Extract the integer digits (digits before the decimal).
+
         from raw Asset string
         example: "99" from Asset string "99.1000000 WAX"
-        '''
+        """
         stripped_value = self.value.strip()
         pos = 0
         int_digits = ""
@@ -157,18 +160,18 @@ class Asset(EosioType):
         return int_digits
 
     def get_frac_digits(self):
-        '''
-        Extracts the integer digits (digits before the decimal) from 
-        raw Asset string
+        """
+        Extract the integer digits (digits before the decimal).
+
         example: "1000000" from Asset string "99.1000000 WAX"
-        '''
+        """
         stripped_value = self.value.strip()
         pos = 0
         precision = 0
         frac_digits = ""
         curr_char = 0
 
-        if '.' in stripped_value:
+        if "." in stripped_value:
             pos = stripped_value.index(".") + 1
             curr_char = stripped_value[pos]
             while (
@@ -187,11 +190,11 @@ class Asset(EosioType):
         return frac_digits
 
     def get_precision(self):
-        '''
-        gets the precision (number of digits after decimal) of raw
-        Asset string
+        """
+        Get the precision (number of digits after decimal).
+
         example: "7" from Asset string "99.1000000 WAX"
-        '''
+        """
         return len(self.get_frac_digits())
 
     def __bytes__(self):
@@ -204,7 +207,7 @@ class Asset(EosioType):
         symbol_bytes = bytes(symbol)
 
         return amount_bytes + symbol_bytes
-    
+
     @classmethod
     def from_bytes(cls, bytes_):
         amount_bytes = bytes_[:8]  # get first 8 bytes
@@ -213,7 +216,7 @@ class Asset(EosioType):
             struct.unpack("<Q", amount_bytes)[0]
         )  # amount with decimal values (no decimal splitting yet)
         # get name (currency) from Symbol
-        name = str(Symbol.from_bytes(bytes_[8:])).split(",")[1][:-1]  
+        name = str(Symbol.from_bytes(bytes_[8:])).split(",")[1][:-1]
         if asset_precision == 0:
             value = amount + " " + name
         else:
@@ -240,42 +243,41 @@ class Asset(EosioType):
     @pydantic.validator("value")
     def check_for_frac_digit_if_decimal_exists(cls, v):
         stripped_value = v.strip()
-        if '.' in stripped_value:
+        if "." in stripped_value:
             pos = stripped_value.index(".") + 1
             curr_char = stripped_value[pos]
-            if(
+            if (
                 pos < len(stripped_value)
                 and curr_char >= "0"
                 and curr_char <= "9"
             ):
                 return v
             else:
-                msg = f'decimal provided but no fractional digits were provided.'
+                msg = (
+                    "decimal provided but no fractional digits were provided."
+                )
                 raise ValueError(msg)
         return v
 
     @pydantic.validator("value", allow_reuse=True)
     def check_if_amount_is_valid(cls, v):
         stripped_value = v.strip()
-        amount = float(stripped_value.split(' ')[0])
+        amount = float(stripped_value.split(" ")[0])
         if amount < 0 or amount > 18446744073709551615:
-            msg = (
-                f'amount "{amount}" must be between 0 and '
-                "2^64 inclusive."
-            )
+            msg = f'amount "{amount}" must be between 0 and ' "2^64 inclusive."
             raise ValueError(msg)
         return v
 
     @pydantic.validator("value", allow_reuse=True)
     def check_if_name_is_valid(cls, v):
         stripped_value = v.strip()
-        name = stripped_value.split(' ')[1] 
+        name = stripped_value.split(" ")[1]
         match = re.search("^[A-Z]{1,7}$", name)
-        print("name is "+name+" match is "+str(match))
+        print("name is " + name + " match is " + str(match))
         if not match:
             msg = f'Input "{name}" must be A-Z and between 1 to 7 characters.'
             raise ValueError(msg)
-        return v 
+        return v
 
 
 class Symbol(EosioType):
