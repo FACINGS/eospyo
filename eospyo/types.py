@@ -176,8 +176,8 @@ class Asset(EosioType):
             curr_char = stripped_value[pos]
             while (
                 pos < len(stripped_value)
-                and curr_char >= "0"
-                and curr_char <= "9"
+                and curr_char >= "0"  # noqa: W503
+                and curr_char <= "9"  # noqa: W503
             ):
                 frac_digits += curr_char
                 pos += 1
@@ -222,10 +222,10 @@ class Asset(EosioType):
         else:
             value = (
                 amount[:-asset_precision]
-                + "."
-                + amount[asset_precision + 1 :]
-                + " "
-                + name
+                + "."  # noqa: W503
+                + amount[asset_precision + 1 :]  # noqa: W503, E203
+                + " "  # noqa: W503
+                + name  # noqa: W503
             )  # combine everything and place decimal in correct position
         return cls(value=value)
 
@@ -248,8 +248,8 @@ class Asset(EosioType):
             curr_char = stripped_value[pos]
             if (
                 pos < len(stripped_value)
-                and curr_char >= "0"
-                and curr_char <= "9"
+                and curr_char >= "0"  # noqa: W503
+                and curr_char <= "9"  # noqa: W503
             ):
                 return v
             else:
