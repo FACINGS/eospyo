@@ -132,8 +132,8 @@ test_serialization = [
     (
         "string",
         "teststring",
-        "!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]"
-        / "^_`abcdefghijklmnopqrstuvwxyz{|}~ ",  # noqa: W503
+        "!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]"+
+        "^_`abcdefghijklmnopqrstuvwxyz{|}~ ", 
     ),
     ("string", "teststring", ""),
     ("int8", "tinteight", -128),
