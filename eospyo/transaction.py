@@ -304,6 +304,13 @@ class LinkedTransaction(Transaction):
         return trans
 
 
+def is_canonical(c):
+    return not (c[1] & 0x80) \
+           and not (c[1] == 0 and not (c[2] & 0x80)) \
+           and not (c[33] & 0x80) \
+           and not (c[33] == 0 and not (c[34] & 0x80))
+
+
 def sign_bytes(bytes_: bytes, key: str) -> str:
     nonce = 0
     sha256 = hashlib.sha256()
@@ -312,12 +319,13 @@ def sign_bytes(bytes_: bytes, key: str) -> str:
         v, r, s = ueosio.utils.ecdsa_raw_sign_nonce(
             sha256.digest(), key, nonce
         )
-        if ueosio.utils.is_canonical(r, s):
-            signature = "00%02x%064x%064x" % (v, r, s)
+        signature = v.to_bytes(1, "big") + r.to_bytes(32, "big") + s.to_bytes(32, "big")
+        if is_canonical(signature):
+            signature = b"\x00" + signature
             break
         nonce += 1
 
-    ds = ueosio.DataStream(bytes.fromhex(signature))
+    ds = ueosio.DataStream(signature)
     signature = ds.unpack_signature()
 
     return signature
