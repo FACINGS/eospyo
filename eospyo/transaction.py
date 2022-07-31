@@ -324,7 +324,8 @@ def sign_bytes(bytes_: bytes, key: str) -> str:
         v, r, s = ueosio.utils.ecdsa_raw_sign_nonce(
             sha256.digest(), key, nonce
         )
-        signature = v.to_bytes(1, "big") + r.to_bytes(32, "big") + s.to_bytes(32, "big")
+        signature = v.to_bytes(1, "big")
+        signature += r.to_bytes(32, "big") + s.to_bytes(32, "big")
         if is_canonical(signature):
             signature = b"\x00" + signature
             break
