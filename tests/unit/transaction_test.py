@@ -321,7 +321,6 @@ def test_when_send_example_transaction_then_returns_expired_transaction_error(
     assert resp["error"]["what"] == "Expired Transaction"
 
 
-@pytest.mark.flaky(reruns=2)
 def test_e2e_with_transaction_ok(net):
     data = [
         eospyo.Data(name="from", value=eospyo.types.Name("user2")),
