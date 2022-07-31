@@ -304,11 +304,16 @@ class LinkedTransaction(Transaction):
         return trans
 
 
-def is_canonical(c):
-    return not (c[1] & 0x80) \
-           and not (c[1] == 0 and not (c[2] & 0x80)) \
-           and not (c[33] & 0x80) \
-           and not (c[33] == 0 and not (c[34] & 0x80))
+def is_canonical(signature):
+    canonical = all(
+        [
+            not (signature[1] & 0x80),
+            not (signature[1] == 0 and not (signature[2] & 0x80)),
+            not (signature[33] & 0x80),
+            not (signature[33] == 0 and not (signature[34] & 0x80)),
+        ]
+    )
+    return canonical
 
 
 def sign_bytes(bytes_: bytes, key: str) -> str:
