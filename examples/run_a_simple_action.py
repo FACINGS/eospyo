@@ -33,5 +33,3 @@ key = "a_very_secret_key"
 signed_transaction = linked_transaction.sign(key=key)
 
 resp = signed_transaction.send()
-
-

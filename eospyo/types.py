@@ -2,6 +2,7 @@
 
 import calendar
 import datetime as dt
+import re
 import struct
 import sys
 from abc import ABC, abstractmethod
@@ -105,6 +106,246 @@ class String(EosioType):
         start = len(size)
         string_bytes = bytes_[start : start + size.value]  # NOQA: E203
         value = string_bytes.decode("utf8")
+        return cls(value=value)
+
+
+class Asset(EosioType):
+    """
+    Serialize a Asset.
+
+    serializes an amount (can be a float value) and currency name together
+    uses Symbol type to serialize percision and name of currency,
+    uses Uint64 type to serialize amount
+    amount and name are seperated by one space
+    example: 50.100000 WAX
+    """
+
+    value: str
+
+    def get_name(self):
+        """
+        Extract the name from a raw Asset string.
+
+        example: "WAX" from Asset string "99.1000000 WAX"
+        """
+        stripped_value = self.value.strip()
+        return stripped_value.split(" ")[1]
+
+    def get_int_digits(self):
+        """
+        Extract the integer digits (digits before the decimal).
+
+        from raw Asset string
+        example: "99" from Asset string "99.1000000 WAX"
+        """
+        stripped_value = self.value.strip()
+        pos = 0
+        int_digits = ""
+
+        # check for negative sign
+        if stripped_value[pos] == "-":
+            int_digits += "-"
+            pos += 1
+
+        curr_char = stripped_value[pos]
+
+        # get amount value
+        while (
+            pos < len(stripped_value) and curr_char >= "0" and curr_char <= "9"
+        ):
+            int_digits += curr_char
+            pos += 1
+            curr_char = stripped_value[pos]
+
+        return int_digits
+
+    def get_frac_digits(self):
+        """
+        Extract the integer digits (digits before the decimal).
+
+        example: "1000000" from Asset string "99.1000000 WAX"
+        """
+        stripped_value = self.value.strip()
+        pos = 0
+        precision = 0
+        frac_digits = ""
+        curr_char = 0
+
+        if "." in stripped_value:
+            pos = stripped_value.index(".") + 1
+            curr_char = stripped_value[pos]
+            while (
+                pos < len(stripped_value)
+                and curr_char >= "0"  # noqa: W503
+                and curr_char <= "9"  # noqa: W503
+            ):
+                frac_digits += curr_char
+                pos += 1
+                curr_char = stripped_value[pos]
+                precision += 1
+
+        else:
+            return ""
+
+        return frac_digits
+
+    def get_precision(self):
+        """
+        Get the precision (number of digits after decimal).
+
+        example: "7" from Asset string "99.1000000 WAX"
+        """
+        return len(self.get_frac_digits())
+
+    def __bytes__(self):
+
+        amount = Uint64(int(self.get_int_digits() + self.get_frac_digits()))
+        name = self.get_name()
+        symbol = Symbol(str(self.get_precision()) + "," + name)
+
+        amount_bytes = bytes(amount)
+        symbol_bytes = bytes(symbol)
+
+        return amount_bytes + symbol_bytes
+
+    @classmethod
+    def from_bytes(cls, bytes_):
+        amount_bytes = bytes_[:8]  # get first 8 bytes
+        asset_precision = bytes_[8]  # (amount of decimal places)
+        amount = str(
+            struct.unpack("<Q", amount_bytes)[0]
+        )  # amount with decimal values (no decimal splitting yet)
+        # get name (currency) from Symbol
+        name = str(Symbol.from_bytes(bytes_[8:])).split(",")[1][:-1]
+        if asset_precision == 0:
+            value = amount + " " + name
+        else:
+            value = (
+                amount[:-asset_precision]
+                + "."  # noqa: W503
+                + amount[asset_precision + 1 :]  # noqa: W503, E203
+                + " "  # noqa: W503
+                + name  # noqa: W503
+            )  # combine everything and place decimal in correct position
+        return cls(value=value)
+
+    @pydantic.validator("value")
+    def amount_must_be_in_the_valid_range(cls, v):
+        value_list = str(v).strip().split(" ")
+        if len(value_list) != 2:
+            msg = (
+                f'Input "{v}" must have exactly one space in between '
+                "amount and name"
+            )
+            raise ValueError(msg)
+        return v
+
+    @pydantic.validator("value")
+    def check_for_frac_digit_if_decimal_exists(cls, v):
+        stripped_value = v.strip()
+        if "." in stripped_value:
+            pos = stripped_value.index(".") + 1
+            curr_char = stripped_value[pos]
+            if (
+                pos < len(stripped_value)
+                and curr_char >= "0"  # noqa: W503
+                and curr_char <= "9"  # noqa: W503
+            ):
+                return v
+            else:
+                msg = (
+                    "decimal provided but no fractional digits were provided."
+                )
+                raise ValueError(msg)
+        return v
+
+    @pydantic.validator("value", allow_reuse=True)
+    def check_if_amount_is_valid(cls, v):
+        stripped_value = v.strip()
+        amount = float(stripped_value.split(" ")[0])
+        if amount < 0 or amount > 18446744073709551615:
+            msg = f'amount "{amount}" must be between 0 and ' "2^64 inclusive."
+            raise ValueError(msg)
+        return v
+
+    @pydantic.validator("value", allow_reuse=True)
+    def check_if_name_is_valid(cls, v):
+        stripped_value = v.strip()
+        name = stripped_value.split(" ")[1]
+        match = re.search("^[A-Z]{1,7}$", name)
+        print("name is " + name + " match is " + str(match))
+        if not match:
+            msg = f'Input "{name}" must be A-Z and between 1 to 7 characters.'
+            raise ValueError(msg)
+        return v
+
+
+class Symbol(EosioType):
+    """
+    Serialize a Symbol.
+
+    serializes a percision and currency name together
+    precision is used to indicate how many decimals there
+    are in an Asset type amount
+    precision and name are seperated by a commma
+    example: 1,WAX
+    """
+
+    value: str
+
+    @pydantic.validator("value", allow_reuse=True)
+    def name_must_be_of_valid_length(cls, v):
+        name = v.split(",")[1]
+        match = re.search("^[A-Z]{1,7}$", name)
+        if not match:
+            msg = f'Input "{name}" must be A-Z and between 1 to 7 characters.'
+            raise ValueError(msg)
+        return v
+
+    @pydantic.validator("value", allow_reuse=True)
+    def precision_must_be_in_the_valid_range(cls, v):
+        precision = int(v.split(",")[0])
+        if precision < 0 or precision > 16:
+            msg = (
+                f'precision "{precision}" must be between 0 and '
+                "16 inclusive."
+            )
+            raise ValueError(msg)
+        return v
+
+    def __bytes__(self):
+        precision = int(self.value.split(",")[0])
+        precision_bytes_ = struct.pack("<B", (precision & 0xFF))
+        bytes_ = precision_bytes_
+        name = self.value.split(",")[1]
+        name_bytes_ = name.encode("utf8")
+        bytes_ += name_bytes_
+        leftover_byte_space = len(name) + 1
+        while (
+            leftover_byte_space < 8
+        ):  # add null bytes in remaining empty space
+            bytes_ += struct.pack("<B", 0)
+            leftover_byte_space += 1
+        return bytes_
+
+    @classmethod
+    def from_bytes(cls, bytes_):
+        bytes_len = len(bytes_)
+        precision = ""
+        name = ""
+        for i in range(bytes_len):
+            if chr(bytes_[i]).isupper():
+                precision = str(bytes_[0])
+                name_bytes = bytes_[i:]  # name is all bytes after precision
+                for k in range(1, len(name_bytes) + 1):
+                    if not chr(bytes_[k]).isupper():
+                        name_bytes = name_bytes[
+                            : k - 1
+                        ]  # name only goes up to the last upper case character
+                name = name_bytes.decode("utf8")
+                break
+
+        value = precision + "," + name
         return cls(value=value)
 
 
