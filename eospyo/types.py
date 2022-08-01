@@ -161,7 +161,7 @@ class Asset(EosioType):
 
     def get_frac_digits(self):
         """
-        Extract the integer digits (digits before the decimal).
+        Extract the decimal digits as integers (digits after the decimal).
 
         example: "1000000" from Asset string "99.1000000 WAX"
         """
