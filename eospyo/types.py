@@ -273,7 +273,6 @@ class Asset(EosioType):
         stripped_value = v.strip()
         name = stripped_value.split(" ")[1]
         match = re.search("^[A-Z]{1,7}$", name)
-        print("name is " + name + " match is " + str(match))
         if not match:
             msg = f'Input "{name}" must be A-Z and between 1 to 7 characters.'
             raise ValueError(msg)
