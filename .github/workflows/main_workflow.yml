@@ -50,3 +50,6 @@ jobs:
       - name: Run docker image
         run: docker-compose up --build -d
 
+      - name: Run unit tests
+        run: pytest
+
