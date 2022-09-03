@@ -7,7 +7,7 @@ jobs:
         os: [ubuntu-20.04]
         python: [3.8, 3.9, 3.10]
 
-    name: Setup ${{ matrix.python }} ${{ matrix.os }}
+    name: Setup python ${{ matrix.python }} on ${{ matrix.os }}
 
     runs-on: ${{ matrix.os }}
 
@@ -23,3 +23,12 @@ jobs:
         run: |
           ls ${{ github.workspace }}
       - run: echo "🍏 This job's status is ${{ job.status }}."
+
+      - name: Validate version
+        run: |
+          $pythonVersion = (python --version)
+          if ("Python ${{ matrix.python }}" -ne "$pythonVersion"){
+            Write-Host "The current version is $pythonVersion; expected version is ${{ matrix.python }}"
+            exit 1
+          }
+          $pythonVersion
