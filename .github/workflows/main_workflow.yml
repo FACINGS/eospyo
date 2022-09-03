@@ -41,8 +41,11 @@ jobs:
 
       - name: Install dependencies
         run: |
+          python -m venv .venv
+          source .venv/bin/activate
           poetry install
 
       - name: Static analysis
         run: |
-          poetry run flake8 eospyo/
+          source .venv/bin/activate
+          flake8 eospyo/
