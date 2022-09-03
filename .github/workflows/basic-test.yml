@@ -1,39 +1,17 @@
-name: 'Basic test of github action'
-
-on:
-  push:
-  pull_request:
-  workflow_dispatch:
-
-
+name: GitHub Actions Demo
+on: [push]
 jobs:
-  setup-versions-from-manifest:
-    name: Setup ${{ matrix.python }} ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-20.04]
-        python: [3.8]
+  Explore-GitHub-Actions:
+    runs-on: ubuntu-latest
     steps:
-    - name: Checkout
-      uses: actions/checkout@v3
-
-    - name: setup-python ${{ matrix.python }}
-      id: setup-python
-      uses: ./
-      with:
-        python-version: ${{ matrix.python }}
-
-    - name: Validate version
-      run: |
-        $pythonVersion = (python --version)
-        if ("Python ${{ matrix.python }}" -ne "$pythonVersion"){
-          Write-Host "The current version is $pythonVersion; expected version is ${{ matrix.python }}"
-          exit 1
-        }
-        $pythonVersion
-      shell: pwsh
-
-    - name: Run simple code
-      run: python -c 'import math; print(math.factorial(5))'
+      - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
+      - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
+      - run: echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
+      - name: Check out repository code
+        uses: actions/checkout@v3
+      - run: echo "💡 The ${{ github.repository }} repository has been cloned to the runner."
+      - run: echo "🖥️ The workflow is now ready to test your code on the runner."
+      - name: List files in the repository
+        run: |
+          ls ${{ github.workspace }}
+      - run: echo "🍏 This job's status is ${{ job.status }}."
