@@ -1,7 +1,7 @@
 name: Main Workflow
 on: ['push', 'pull_request', 'workflow_dispatch']
 jobs:
-  unit-tests:
+  automated-tests:
     strategy:
       fail-fast: false
       matrix:
