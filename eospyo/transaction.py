@@ -6,6 +6,7 @@ import hashlib
 import json
 from typing import List
 
+import base58
 import pydantic
 import ueosio
 
@@ -332,9 +333,32 @@ def sign_bytes(bytes_: bytes, key: str) -> str:
         nonce += 1
 
     ds = ueosio.DataStream(signature)
-    signature = ds.unpack_signature()
+    signature = _unpack_signature(data_stream=ds)
 
     return signature
+
+
+def _ripmed160(data):
+    try:
+        h = hashlib.new("ripemd160")
+    except ValueError:
+        from Crypto.Hash import RIPEMD160  # NOQA: I001
+
+        h = RIPEMD160.new()
+    h.update(data)
+    return h.digest()
+
+
+def _unpack_signature(data_stream) -> str:
+    t = data_stream.unpack_uint8()
+    if t == 0:
+        data = data_stream.read(65)
+        data = data + _ripmed160(data + b"K1")[:4]
+        return "SIG_K1_" + base58.b58encode(data).decode("ascii")
+    elif t == 1:
+        raise NotImplementedError("Not Implemented")
+    else:
+        raise ValueError("Invalid binary signature")
 
 
 class SignedTransaction(LinkedTransaction):
