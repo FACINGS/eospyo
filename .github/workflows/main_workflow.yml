@@ -34,3 +34,8 @@ jobs:
             echo "The current version is $pythonVersion; expected version is ${{ matrix.python-version }}"
             exit 1
           fi
+
+       - name: Install dependencies
+         run: |
+            pip install poetry
+            poetry install
