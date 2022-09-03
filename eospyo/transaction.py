@@ -6,7 +6,7 @@ import hashlib
 import io
 import json
 import struct
-from typing import List
+from typing import List, Tuple
 
 import base58
 import pydantic
@@ -186,7 +186,7 @@ def _endian_reverse_u32(i: int) -> int:
     return r
 
 
-def _get_tapos_info(block_id: str) -> tuple[int]:
+def _get_tapos_info(block_id: str) -> Tuple[int]:
     block_id_bin = bytes.fromhex(block_id)
 
     hash0 = struct.unpack("<Q", block_id_bin[0:8])[0]
