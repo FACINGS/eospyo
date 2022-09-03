@@ -39,3 +39,7 @@ jobs:
         run: |
           pip install poetry
           poetry install
+
+      - name: Static analysis
+        run: |
+          flake8 eospyo/
