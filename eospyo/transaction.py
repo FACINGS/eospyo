@@ -3,6 +3,7 @@
 
 import datetime as dt
 import hashlib
+import io
 import json
 import struct
 from typing import List
@@ -348,8 +349,17 @@ def sign_bytes(bytes_: bytes, key: str) -> str:
             break
         nonce += 1
 
-    ds = ueosio.DataStream(signature)
-    signature = _unpack_signature(data_stream=ds)
+    ds = io.BytesIO(signature)
+    first_byte = ds.read(1)
+    t = struct.unpack("<B", first_byte)[0]
+    if t == 0:
+        data = ds.read(65)
+        data = data + _ripmed160(data + b"K1")[:4]
+        signature = "SIG_K1_" + base58.b58encode(data).decode("ascii")
+    elif t == 1:
+        raise NotImplementedError("Not Implemented")
+    else:
+        raise ValueError("Invalid binary signature")
 
     return signature
 
@@ -363,18 +373,6 @@ def _ripmed160(data):
         h = RIPEMD160.new()
     h.update(data)
     return h.digest()
-
-
-def _unpack_signature(data_stream) -> str:
-    t = data_stream.unpack_uint8()
-    if t == 0:
-        data = data_stream.read(65)
-        data = data + _ripmed160(data + b"K1")[:4]
-        return "SIG_K1_" + base58.b58encode(data).decode("ascii")
-    elif t == 1:
-        raise NotImplementedError("Not Implemented")
-    else:
-        raise ValueError("Invalid binary signature")
 
 
 class SignedTransaction(LinkedTransaction):
