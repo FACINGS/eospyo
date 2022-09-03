@@ -2,10 +2,14 @@ name: GitHub Actions Demo
 on: [push, pull_request, workflow_dispatch]
 jobs:
   unit-tests:
-    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [ubuntu-20.04]
+
+    name: Setup ${{ matrix.os }}
+
+    runs-on: ${{ matrix.os }}
+
     steps:
       - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
       - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
