@@ -7,7 +7,7 @@ jobs:
         os: [ubuntu-20.04]
         python-version: [3.8, 3.9, 3.10]
 
-    name: Setup python ${{ matrix.python }} on ${{ matrix.os }}
+    name: Setup python ${{ matrix.python-version }} on ${{ matrix.os }}
 
     runs-on: ${{ matrix.os }}
 
@@ -31,9 +31,9 @@ jobs:
       - name: Validate version
         run: |
           pythonVersion=$(python --version 2>&1)
-          if [ "Python ${{ matrix.python }}" != "$pythonVersion" ];
+          if [ "Python ${{ matrix.python-version }}" != "$pythonVersion" ];
           then
-            echo "The current version is $pythonVersion; expected version is ${{ matrix.python }}"
+            echo "The current version is $pythonVersion; expected version is ${{ matrix.python-version }}"
             exit 1
           fi
           $pythonVersion
