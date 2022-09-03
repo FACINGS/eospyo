@@ -27,8 +27,9 @@ jobs:
       - name: Validate version
         run: |
           pythonVersion=$(python --version 2>&1)
-          if ("Python ${{ matrix.python }}" -ne "$pythonVersion"){
+          if [ "Python ${{ matrix.python }}" -ne "$pythonVersion" ];
+          then
             echo "The current version is $pythonVersion; expected version is ${{ matrix.python }}"
             exit 1
-          }
+          fi
           $pythonVersion
