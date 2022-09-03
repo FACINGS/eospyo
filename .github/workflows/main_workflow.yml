@@ -19,14 +19,10 @@ jobs:
       - name: Check out repository code
         uses: actions/checkout@v3
 
-      - name: Install poetry
-        run: pip install poetry
-
       - name: Setup python
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
-          cache: 'poetry'
 
       - name: Validate python version
         run: |
@@ -43,6 +39,7 @@ jobs:
         run: |
           python -m venv .venv
           source .venv/bin/activate
+          pip install poetry
           poetry install
 
       - name: Static analysis
