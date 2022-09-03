@@ -1,12 +1,12 @@
 """Transaction, Authorization and Action classes."""
 
 
-import base58
 import datetime as dt
 import hashlib
 import json
 from typing import List
 
+import base58
 import pydantic
 import ueosio
 
@@ -342,7 +342,8 @@ def _ripmed160(data):
     try:
         h = hashlib.new("ripemd160")
     except ValueError:
-        from Crypto.Hash import RIPEMD160
+        from Crypto.Hash import RIPEMD160  # NOQA: I001
+
         h = RIPEMD160.new()
     h.update(data)
     return h.digest()
