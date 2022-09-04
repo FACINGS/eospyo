@@ -3,9 +3,12 @@
 
 import datetime as dt
 import hashlib
+import io
 import json
-from typing import List
+import struct
+from typing import List, Tuple
 
+import base58
 import pydantic
 import ueosio
 
@@ -177,6 +180,23 @@ class LinkedAction(Action):
         return bytes_
 
 
+def _endian_reverse_u32(i: int) -> int:
+    i = i & 0xFFFFFFFF
+    r = (((i >> 0x18) & 0xFF)) | (((i >> 0x10) & 0xFF) << 0x08) | (((i >> 0x08) & 0xFF) << 0x10) | (((i) & 0xFF) << 0x18)  # NOQA BLK100, E501
+    return r
+
+
+def _get_tapos_info(block_id: str) -> Tuple[int]:
+    block_id_bin = bytes.fromhex(block_id)
+
+    hash0 = struct.unpack("<Q", block_id_bin[0:8])[0]
+    hash1 = struct.unpack("<Q", block_id_bin[8:16])[0]
+
+    ref_block_num = _endian_reverse_u32(hash0) & 0xFFFF
+    ref_block_prefix = hash1 & 0xFFFFFFFF
+    return ref_block_num, ref_block_prefix
+
+
 class Transaction(pydantic.BaseModel):
     """
     Raw Transaction. It can't be sent to the blockchain.
@@ -207,9 +227,7 @@ class Transaction(pydantic.BaseModel):
         block_id = net_info["last_irreversible_block_id"]
         chain_id = net_info["chain_id"]
 
-        ref_block_num, ref_block_prefix = ueosio.get_tapos_info(
-            block_id=block_id
-        )
+        ref_block_num, ref_block_prefix = _get_tapos_info(block_id=block_id)
         expiration = dt.datetime.utcnow() + dt.timedelta(
             seconds=self.expiration_delay_sec
         )
@@ -331,10 +349,30 @@ def sign_bytes(bytes_: bytes, key: str) -> str:
             break
         nonce += 1
 
-    ds = ueosio.DataStream(signature)
-    signature = ds.unpack_signature()
+    ds = io.BytesIO(signature)
+    first_byte = ds.read(1)
+    t = struct.unpack("<B", first_byte)[0]
+    if t == 0:
+        data = ds.read(65)
+        data = data + _ripmed160(data + b"K1")[:4]
+        signature = "SIG_K1_" + base58.b58encode(data).decode("ascii")
+    elif t == 1:
+        raise NotImplementedError("Not Implemented")
+    else:
+        raise ValueError("Invalid binary signature")
 
     return signature
+
+
+def _ripmed160(data):
+    try:
+        h = hashlib.new("ripemd160")
+    except ValueError:
+        from Crypto.Hash import RIPEMD160  # NOQA: I001
+
+        h = RIPEMD160.new()
+    h.update(data)
+    return h.digest()
 
 
 class SignedTransaction(LinkedTransaction):
