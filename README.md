@@ -1,5 +1,6 @@
 Minimalist python library to interact with eosio blockchain networks
 
+![Test](https://github.com/FACINGS/eospyo/actions/workflows/main_workflow.yml/badge.svg)
 
 # What is it?
 **eospyo** is a python library to interact with EOSIO blockchains.  
