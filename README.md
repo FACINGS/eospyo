@@ -1,10 +1,18 @@
-Minimalist python library to interact with eosio blockchain networks
-
+<div align="center">
+    
+<p align="center">
+  <img width="600" src="https://miro.medium.com/max/1400/1*5KEvJB1UBBsk_1ZTBtJfJA.png">
+</p>
+    
+*Minimalist python library to interact with eosio blockchain networks*
+ 
 ![Test](https://github.com/FACINGS/eospyo/actions/workflows/main_workflow.yml/badge.svg)
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/eospyo)
 ![version](https://img.shields.io/pypi/v/eospyo)
 ![GitHub repo size](https://img.shields.io/github/repo-size/facings/eospyo)
 ![GitHub last commit](https://img.shields.io/github/last-commit/facings/eospyo)
+
+</div>
 
 # What is it?
 **eospyo** is a python library to interact with EOSIO blockchains.  
