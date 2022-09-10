@@ -11,6 +11,8 @@ import cryptos
 
 
 def sign_bytes(*, bytes_: bytes, key: str) -> str:
+    _check_bytes(bytes_)
+
     nonce = 0
     sha256 = hashlib.sha256()
     sha256.update(bytes_)
@@ -36,6 +38,14 @@ def sign_bytes(*, bytes_: bytes, key: str) -> str:
         raise ValueError("Invalid binary signature")
 
     return signature
+
+
+def _check_bytes(bytes_):
+    if len(bytes_) == 0:
+        raise ValueError("Can not sign empty bytes")
+    if not isinstance(bytes_, bytes):
+        msg = f"sign_bytes requires 'byte' type. But '{type(bytes_)}' received"
+        raise TypeError(msg)
 
 
 def _ripmed160(data):
@@ -84,7 +94,10 @@ def _ecdsa_raw_sign_nonce(message_hash, key, nonce):
 def _deterministic_generate_k_nonce(message_hash, key, nonce):
     v = b"\x01" * 32
     k = b"\x00" * 32
-    key_encoded = cryptos.encode_privkey(key, "bin")
+    try:
+        key_encoded = cryptos.encode_privkey(key, "bin")
+    except AssertionError:
+        raise ValueError("Error in private key provided: {key=}")
 
     msg_int = cryptos.hash_to_int(message_hash)
     message_hash = cryptos.encode(msg_int + nonce, 256, 32)
