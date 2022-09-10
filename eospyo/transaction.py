@@ -3,16 +3,13 @@
 
 import datetime as dt
 import hashlib
-import io
 import json
 import struct
 from typing import List, Tuple
 
-import base58
 import pydantic
-import ueosio
 
-from . import types
+from . import types, utils
 from .net import Net
 
 
@@ -304,7 +301,7 @@ class LinkedTransaction(Transaction):
         zero_bytes = bytes.fromhex("0" * 64)
         bytes_ = chain_bytes + trans_bytes + zero_bytes
 
-        signature = sign_bytes(bytes_, key)
+        signature = utils.sign_bytes(bytes_=bytes_, key=key)
         signs.append(signature)
         trans = SignedTransaction(
             net=self.net,
@@ -320,59 +317,6 @@ class LinkedTransaction(Transaction):
             signatures=tuple(signs),
         )
         return trans
-
-
-def is_canonical(signature):
-    canonical = all(
-        [
-            not (signature[1] & 0x80),
-            not (signature[1] == 0 and not (signature[2] & 0x80)),
-            not (signature[33] & 0x80),
-            not (signature[33] == 0 and not (signature[34] & 0x80)),
-        ]
-    )
-    return canonical
-
-
-def sign_bytes(bytes_: bytes, key: str) -> str:
-    nonce = 0
-    sha256 = hashlib.sha256()
-    sha256.update(bytes_)
-    while True:
-        v, r, s = ueosio.utils.ecdsa_raw_sign_nonce(
-            sha256.digest(), key, nonce
-        )
-        signature = v.to_bytes(1, "big")
-        signature += r.to_bytes(32, "big") + s.to_bytes(32, "big")
-        if is_canonical(signature):
-            signature = b"\x00" + signature
-            break
-        nonce += 1
-
-    ds = io.BytesIO(signature)
-    first_byte = ds.read(1)
-    t = struct.unpack("<B", first_byte)[0]
-    if t == 0:
-        data = ds.read(65)
-        data = data + _ripmed160(data + b"K1")[:4]
-        signature = "SIG_K1_" + base58.b58encode(data).decode("ascii")
-    elif t == 1:
-        raise NotImplementedError("Not Implemented")
-    else:
-        raise ValueError("Invalid binary signature")
-
-    return signature
-
-
-def _ripmed160(data):
-    try:
-        h = hashlib.new("ripemd160")
-    except ValueError:
-        from Crypto.Hash import RIPEMD160  # NOQA: I001
-
-        h = RIPEMD160.new()
-    h.update(data)
-    return h.digest()
 
 
 class SignedTransaction(LinkedTransaction):
