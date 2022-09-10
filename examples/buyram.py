@@ -4,11 +4,12 @@
 import eospyo
 
 data = [
+    # in this case the account me.wam is buying ram for itself
     eospyo.Data(name="payer", value=eospyo.types.Name("me.wam")),
     eospyo.Data(name="receiver", value=eospyo.types.Name("me.wam")),
     eospyo.Data(
-        name="quant",
-        value=eospyo.types.Asset("5.00000000 WAX"),
+        name="quant", # Selects the 'quant' field in this action, must be a valid field in the action
+        value=eospyo.types.Asset("5.00000000 WAX"), # Asset type must be specified as quant requires the amount and currency type, which Asset includes
     ),
 ]
 

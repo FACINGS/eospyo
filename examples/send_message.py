@@ -5,14 +5,14 @@ import eospyo
 
 
 data = [
+    # Not specifying an account with the "to" field will send the message to the same account sending it in the "from" field
     eospyo.Data(name="from", value=eospyo.types.Name("me.wam")),
     eospyo.Data(
         name="message",
-        value=eospyo.types.String("hello from eospyo"),
+        value=eospyo.types.String("hello from eospyo"), # String specified for message type, type must be specificed
     ),
 ]
 
-# everything else has the same syntax as current examples
 auth = eospyo.Authorization(actor="me.wam", permission="active")
 
 action = eospyo.Action(

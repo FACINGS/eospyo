@@ -4,16 +4,21 @@ import eospyo
 
 
 data = [
+    # Specifices the voter account
     eospyo.Data(
         name="voter",
         value=eospyo.types.Name("me.wam"),
     ),
+    # Specifices the proxy (can be empty)
     eospyo.Data(
         name="proxy",
         value=eospyo.types.Name(""),
     ),
+    # Specifics the producers
     eospyo.Data(
         name="producers",
+        # can vote for mutliple producers, so value is of type array
+        # for Array type, need yo specify type of Array with '_type' and values of array in a list
         value=eospyo.types.Array(
             type_=eospyo.types.Name, values=["eosiodetroit"]
         ),
