@@ -17,7 +17,7 @@
 # What is it?
 **eospyo** is a python library to interact with EOSIO blockchains.  
 Its main focus are server side applications.  
-This library is heavily influenced (and still uses some pieces of code from) by [µEOSIO](https://github.com/EOSArgentina/ueosio). Many thanks to them for the astonishing job!  
+This library is heavily influenced by [µEOSIO](https://github.com/EOSArgentina/ueosio). Many thanks to them for the astonishing job!  
 
 
 # Main features
@@ -96,8 +96,6 @@ There are some other examples [here](./examples)
 
 
 # Known bugs
-### Keys not working
-- Some keys are reported to not work. However this error was not replicated and the cause remains unknown. If you can share a key pair that is not working it would be very helpful.
 ### multi-byte utf-8 characters can not be serialized
 - Serialization of multi-byte utf-8 characters is somewhat unpredictable in the current implementation, therfore any String input containing multi-utf8 byte characters will be blocked for the time being.
 
