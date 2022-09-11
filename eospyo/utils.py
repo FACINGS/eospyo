@@ -78,16 +78,16 @@ def _is_canonical(signature):
 
 
 def _ecdsa_raw_sign_nonce(message_hash, key, nonce):
-    msg_int = hash_to_int(message_hash)
+    msg_int = _hash_to_int(message_hash)
     k = _deterministic_generate_k_nonce(message_hash, key, nonce)
 
-    r, y = fast_multiply(G, k)
-    s = inv(k, N) * (msg_int + r * decode_privkey(key)) % N  # NOQA: W503
+    r, y = _fast_multiply(G, k)
+    s = _inv(k, N) * (msg_int + r * _decode_privkey(key)) % N  # NOQA: W503
 
     v = 27 + ((y % 2) ^ (0 if s * 2 < N else 1))
     s = s if s * 2 < N else N - s
 
-    if "compressed" in get_privkey_format(key):
+    if "compressed" in _get_privkey_format(key):
         v += 4
 
     return v, r, s
@@ -97,11 +97,11 @@ def _deterministic_generate_k_nonce(message_hash, key, nonce):
     v = b"\x01" * 32
     k = b"\x00" * 32
     try:
-        key_encoded = encode_privkey(key, "bin")
+        key_encoded = _encode_privkey(key, "bin")
     except AssertionError:
         raise ValueError("Error in private key provided: {key=}")
 
-    msg_int = hash_to_int(message_hash)
+    msg_int = _hash_to_int(message_hash)
     message_hash = _encode(msg_int + nonce, 256, 32)
 
     k = _sha256_hmac_digest(k, v + b"\x00" + key_encoded + message_hash)
@@ -182,35 +182,30 @@ def _decode(string, base):  # NOQA: C901
     return result
 
 
-def lpad(msg, symbol, length):
-    if len(msg) >= length:
-        return msg
-    return symbol * (length - len(msg)) + msg
-
-
-def changebase(string, frm, to, minlen=0):
+def _changebase(string, frm, to, minlen=0):
     if frm == to:
-        return lpad(string, CODE_STRINGS[frm][0], minlen)
+        char = CODE_STRINGS[frm][0]
+        return string.ljust(minlen, char)
     return _encode(_decode(string, frm), to, minlen)
 
 
-def bin_dbl_sha256(s):
-    bytes_to_hash = from_string_to_bytes(s)
+def _bin_dbl_sha256(s):
+    bytes_to_hash = _from_string_to_bytes(s)
     return hashlib.sha256(hashlib.sha256(bytes_to_hash).digest()).digest()
 
 
-def from_string_to_bytes(a):
+def _from_string_to_bytes(a):
     return a if isinstance(a, bytes) else bytes(a, "utf-8")
 
 
-def b58check_to_bin(inp):
+def _b58check_to_bin(inp):
     leadingzbytes = len(re.match("^1*", inp).group(0))
-    data = b"\x00" * leadingzbytes + changebase(inp, 58, 256)
-    assert bin_dbl_sha256(data[:-4])[:4] == data[-4:]
+    data = b"\x00" * leadingzbytes + _changebase(inp, 58, 256)
+    assert _bin_dbl_sha256(data[:-4])[:4] == data[-4:]
     return data[1:-4]
 
 
-def get_privkey_format(priv):  # NOQA: C901
+def _get_privkey_format(priv):  # NOQA: C901
     if isinstance(priv, (int, float)):
         return "decimal"
     elif len(priv) == 32:
@@ -222,7 +217,7 @@ def get_privkey_format(priv):  # NOQA: C901
     elif len(priv) == 66:
         return "hex_compressed"
     else:
-        bin_p = b58check_to_bin(priv)
+        bin_p = _b58check_to_bin(priv)
         if len(bin_p) == 32:
             return "wif"
         elif len(bin_p) == 33:
@@ -231,15 +226,15 @@ def get_privkey_format(priv):  # NOQA: C901
             raise Exception("WIF does not represent privkey")
 
 
-def from_int_to_byte(a):
+def _from_int_to_byte(a):
     return bytes([a])
 
 
-def bin_to_b58check(inp, magicbyte=0):
+def _bin_to_b58check(inp, magicbyte=0):
     if magicbyte == 0:
-        inp = from_int_to_byte(0) + inp
+        inp = _from_int_to_byte(0) + inp
     while magicbyte > 0:
-        inp = from_int_to_byte(magicbyte % 256) + inp
+        inp = _from_int_to_byte(magicbyte % 256) + inp
         magicbyte //= 256
 
     leadingzbytes = 0
@@ -248,13 +243,13 @@ def bin_to_b58check(inp, magicbyte=0):
             break
         leadingzbytes += 1
 
-    checksum = bin_dbl_sha256(inp)[:4]
-    return "1" * leadingzbytes + changebase(inp + checksum, 256, 58)
+    checksum = _bin_dbl_sha256(inp)[:4]
+    return "1" * leadingzbytes + _changebase(inp + checksum, 256, 58)
 
 
-def encode_privkey(priv, formt, vbyte=0):  # NOQA: C901
+def _encode_privkey(priv, formt, vbyte=0):  # NOQA: C901
     if not isinstance(priv, (int, float)):
-        return encode_privkey(decode_privkey(priv), formt, vbyte)
+        return _encode_privkey(_decode_privkey(priv), formt, vbyte)
     if formt == "decimal":
         return priv
     elif formt == "bin":
@@ -266,18 +261,18 @@ def encode_privkey(priv, formt, vbyte=0):  # NOQA: C901
     elif formt == "hex_compressed":
         return _encode(priv, 16, 64) + "01"
     elif formt == "wif":
-        return bin_to_b58check(_encode(priv, 256, 32), 128 + int(vbyte))
+        return _bin_to_b58check(_encode(priv, 256, 32), 128 + int(vbyte))
     elif formt == "wif_compressed":
-        return bin_to_b58check(
+        return _bin_to_b58check(
             _encode(priv, 256, 32) + b"\x01", 128 + int(vbyte)
         )
     else:
         raise Exception("Invalid format!")
 
 
-def decode_privkey(priv, formt=None):  # NOQA: C901
+def _decode_privkey(priv, formt=None):  # NOQA: C901
     if not formt:
-        formt = get_privkey_format(priv)
+        formt = _get_privkey_format(priv)
     if formt == "decimal":
         return priv
     elif formt == "bin":
@@ -289,19 +284,19 @@ def decode_privkey(priv, formt=None):  # NOQA: C901
     elif formt == "hex_compressed":
         return _decode(priv[:64], 16)
     elif formt == "wif":
-        return _decode(b58check_to_bin(priv), 256)
+        return _decode(_b58check_to_bin(priv), 256)
     elif formt == "wif_compressed":
-        return _decode(b58check_to_bin(priv)[:32], 256)
+        return _decode(_b58check_to_bin(priv)[:32], 256)
     else:
         raise Exception("WIF does not represent privkey")
 
 
-def from_jacobian(p):
-    z = inv(p[2], P)
+def _from_jacobian(p):
+    z = _inv(p[2], P)
     return ((p[0] * z**2) % P, (p[1] * z**3) % P)
 
 
-def jacobian_double(p):
+def _jacobian_double(p):
     if not p[1]:
         return (0, 0, 0)
     ysq = (p[1] ** 2) % P
@@ -313,20 +308,22 @@ def jacobian_double(p):
     return (nx, ny, nz)
 
 
-def jacobian_multiply(a, n):  # NOQA: C901
+def _jacobian_multiply(a, n):  # NOQA: C901
     if a[1] == 0 or n == 0:
         return (0, 0, 1)
     if n == 1:
         return a
     if n < 0 or n >= N:
-        return jacobian_multiply(a, n % N)
+        return _jacobian_multiply(a, n % N)
     if (n % 2) == 0:
-        return jacobian_double(jacobian_multiply(a, n // 2))
+        return _jacobian_double(_jacobian_multiply(a, n // 2))
     if (n % 2) == 1:
-        return jacobian_add(jacobian_double(jacobian_multiply(a, n // 2)), a)
+        return _jacobian_add(
+            _jacobian_double(_jacobian_multiply(a, n // 2)), a
+        )
 
 
-def jacobian_add(p, q):
+def _jacobian_add(p, q):
     if not p[1]:
         return q
     if not q[1]:
@@ -338,7 +335,7 @@ def jacobian_add(p, q):
     if U1 == U2:
         if S1 != S2:
             return (0, 0, 1)
-        return jacobian_double(p)
+        return _jacobian_double(p)
     H = U2 - U1
     R = S2 - S1
     H2 = (H * H) % P
@@ -350,16 +347,16 @@ def jacobian_add(p, q):
     return (nx, ny, nz)
 
 
-def to_jacobian(p):
+def _to_jacobian(p):
     o = (p[0], p[1], 1)
     return o
 
 
-def fast_multiply(a, n):
-    return from_jacobian(jacobian_multiply(to_jacobian(a), n))
+def _fast_multiply(a, n):
+    return _from_jacobian(_jacobian_multiply(_to_jacobian(a), n))
 
 
-def inv(a, n):
+def _inv(a, n):
     if a == 0:
         return 0
     lm, hm = 1, 0
@@ -371,7 +368,7 @@ def inv(a, n):
     return lm % n
 
 
-def hash_to_int(x):
+def _hash_to_int(x):
     if len(x) in [40, 64]:
         return _decode(x, 16)
     return _decode(x, 256)
