@@ -78,7 +78,7 @@ def _is_canonical(signature):
 
 
 def _ecdsa_raw_sign_nonce(message_hash, key, nonce):
-    msg_int = _hash_to_int(message_hash)
+    msg_int = _decode(message_hash, 256)
     k = _deterministic_generate_k_nonce(message_hash, key, nonce)
 
     r, y = _fast_multiply(G, k)
@@ -101,7 +101,7 @@ def _deterministic_generate_k_nonce(message_hash, key, nonce):
     except AssertionError:
         raise ValueError("Error in private key provided: {key=}")
 
-    msg_int = _hash_to_int(message_hash)
+    msg_int = _decode(message_hash, 256)
     message_hash = _encode(msg_int + nonce, 256, 32)
 
     k = _sha256_hmac_digest(k, v + b"\x00" + key_encoded + message_hash)
@@ -158,8 +158,6 @@ def _encode(val, base, minlen=0):
 
 
 def _decode(string, base):  # NOQA: C901
-    if base == 256 and isinstance(string, str):
-        string = bytes(bytearray.fromhex(string))
     base = int(base)
     code_string = CODE_STRINGS[base]
     result = 0
@@ -173,8 +171,6 @@ def _decode(string, base):  # NOQA: C901
         def extract(d, cs):
             return cs.find(d if isinstance(d, str) else chr(d))
 
-    if base == 16:
-        string = string.lower()
     while len(string) > 0:
         result *= base
         result += extract(string[0], code_string)
@@ -205,25 +201,13 @@ def _b58check_to_bin(inp):
     return data[1:-4]
 
 
-def _get_privkey_format(priv):  # NOQA: C901
-    if isinstance(priv, (int, float)):
-        return "decimal"
-    elif len(priv) == 32:
-        return "bin"
-    elif len(priv) == 33:
-        return "bin_compressed"
-    elif len(priv) == 64:
-        return "hex"
-    elif len(priv) == 66:
-        return "hex_compressed"
+def _get_privkey_format(priv):
+    bin_p = _b58check_to_bin(priv)
+    if len(bin_p) == 32:
+        return "wif"
     else:
-        bin_p = _b58check_to_bin(priv)
-        if len(bin_p) == 32:
-            return "wif"
-        elif len(bin_p) == 33:
-            return "wif_compressed"
-        else:
-            raise Exception("WIF does not represent privkey")
+        msg = "Can't handle this private key format"
+        raise NotImplementedError(msg)
 
 
 def _from_int_to_byte(a):
@@ -247,48 +231,24 @@ def _bin_to_b58check(inp, magicbyte=0):
     return "1" * leadingzbytes + _changebase(inp + checksum, 256, 58)
 
 
-def _encode_privkey(priv, formt, vbyte=0):  # NOQA: C901
+def _encode_privkey(priv, formt, vbyte=0):
     if not isinstance(priv, (int, float)):
         return _encode_privkey(_decode_privkey(priv), formt, vbyte)
-    if formt == "decimal":
-        return priv
-    elif formt == "bin":
+    if formt == "bin":
         return _encode(priv, 256, 32)
-    elif formt == "bin_compressed":
-        return _encode(priv, 256, 32) + b"\x01"
-    elif formt == "hex":
-        return _encode(priv, 16, 64)
-    elif formt == "hex_compressed":
-        return _encode(priv, 16, 64) + "01"
-    elif formt == "wif":
-        return _bin_to_b58check(_encode(priv, 256, 32), 128 + int(vbyte))
-    elif formt == "wif_compressed":
-        return _bin_to_b58check(
-            _encode(priv, 256, 32) + b"\x01", 128 + int(vbyte)
-        )
     else:
-        raise Exception("Invalid format!")
+        msg = "Can't handle this private key format"
+        raise NotImplementedError(msg)
 
 
-def _decode_privkey(priv, formt=None):  # NOQA: C901
+def _decode_privkey(priv, formt=None):
     if not formt:
         formt = _get_privkey_format(priv)
-    if formt == "decimal":
-        return priv
-    elif formt == "bin":
-        return _decode(priv, 256)
-    elif formt == "bin_compressed":
-        return _decode(priv[:32], 256)
-    elif formt == "hex":
-        return _decode(priv, 16)
-    elif formt == "hex_compressed":
-        return _decode(priv[:64], 16)
-    elif formt == "wif":
+    if formt == "wif":
         return _decode(_b58check_to_bin(priv), 256)
-    elif formt == "wif_compressed":
-        return _decode(_b58check_to_bin(priv)[:32], 256)
     else:
-        raise Exception("WIF does not represent privkey")
+        msg = "Can't handle this private key format"
+        raise NotImplementedError(msg)
 
 
 def _from_jacobian(p):
@@ -366,9 +326,3 @@ def _inv(a, n):
         nm, new = hm - lm * r, high - low * r
         lm, low, hm, high = nm, new, lm, low
     return lm % n
-
-
-def _hash_to_int(x):
-    if len(x) in [40, 64]:
-        return _decode(x, 16)
-    return _decode(x, 256)
