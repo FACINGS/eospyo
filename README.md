@@ -35,7 +35,7 @@ All data is as immutable and all functions are as pure as we can make them.
 # Stability
 This work is in alpha version. That means that we make constant breaking changes to its api.  
 Also there are known (and, of course unknown) bugs and various limitations.  
-Given that, we at [FACINGS](https://facings.io/) have been using this library in production for some few months now.  
+Given that, we at [FACINGS](https://facings.io/) have been using this library in production for over an year now.  
 However we'd advise for you to fix its version when deploying to prod.  
 
 
