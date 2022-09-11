@@ -123,14 +123,6 @@ tomli = {version = "*", optional = true, markers = "python_full_version <= \"3.1
 toml = ["tomli"]
 
 [[package]]
-name = "cryptos"
-version = "1.36"
-description = "Python Crypto Coin Tools"
-category = "main"
-optional = false
-python-versions = "*"
-
-[[package]]
 name = "flake8"
 version = "4.0.1"
 description = "the modular source code checker: pep8 pyflakes and co"
@@ -535,7 +527,7 @@ python-versions = ">=3.7"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "41bb1ce0859f5afc2518f70ac83771f2a7e5d19a53d420a1f8b9928f7fc04217"
+content-hash = "f55018dc9ad6814c641ba799b633ea81b341096a23838d0a2320b1919e55e19f"
 
 [metadata.files]
 anyio = [
@@ -596,10 +588,6 @@ colorama = [
     {file = "colorama-0.4.4.tar.gz", hash = "sha256:5941b2b48a20143d2267e95b1c2a7603ce057ee39fd88e7329b0c292aa16869b"},
 ]
 coverage = []
-cryptos = [
-    {file = "cryptos-1.36-py3-none-any.whl", hash = "sha256:485fa0101918f00418952946fea3aa2a1f61c42ef6508cd9eb5db6f5def8d37e"},
-    {file = "cryptos-1.36.tar.gz", hash = "sha256:cd316709038210fa0bde878db59e8f82716564b7679cdc5a1c34f58efa63f2df"},
-]
 flake8 = [
     {file = "flake8-4.0.1-py2.py3-none-any.whl", hash = "sha256:479b1304f72536a55948cb40a32dce8bb0ffe3501e26eaf292c7e60eb5e0428d"},
     {file = "flake8-4.0.1.tar.gz", hash = "sha256:806e034dda44114815e23c16ef92f95c91e4c71100ff52813adf7132a6ad870d"},
