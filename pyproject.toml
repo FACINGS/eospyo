@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "eospyo"
-version = "0.6.2"
+version = "0.6.3"
 description = "Interact with EOSIO blockchain networks"
 authors = ["Edson <eospyo@facings.io>"]
 homepage = "https://github.com/FACINGS/eospyo"
