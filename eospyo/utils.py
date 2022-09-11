@@ -1,7 +1,5 @@
 """Utility functions."""
 
-# NOQA: I001
-
 import hashlib
 import hmac
 import io
