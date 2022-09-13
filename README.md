@@ -46,7 +46,7 @@ Rather then starting with long docs, just a simple example:
 
 
 ## Use Send Message action
-```
+```python
 import eospyo
 
 
