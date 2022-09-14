@@ -1,10 +1,12 @@
 """type tests."""
 
 import datetime as dt
+from pathlib import Path
 
-import eospyo
 import pydantic
 import pytest
+
+import eospyo
 from eospyo import types
 
 values = [
@@ -93,11 +95,31 @@ values = [
         "99 WAX",
         b"c\x00\x00\x00\x00\x00\x00\x00\x00WAX\x00\x00\x00\x00",
     ),
+    (
+        types.Abi,
+        "tests/unit/test_contract/simplecontract.abi",
+        "tests/unit/test_contract/bin_files/abi_bin_1.txt",
+    ),
+    (
+        types.Wasm,
+        "tests/unit/test_contract/simplecontract.wasm",
+        "tests/unit/test_contract/bin_files/wasm_bin_1.txt",
+    ),
 ]
 
 
 @pytest.mark.parametrize("class_,input_,expected_output", values)
 def test_type_bytes(class_, input_, expected_output):
+    uses_file = {
+        types.Abi,
+        types.Wasm,
+    }
+    if class_ in uses_file:
+        filename = Path().resolve() / expected_output
+        with open(filename, "rb") as f:
+            content = f.read()
+        expected_output = content
+
     instance = class_(input_)
     output = bytes(instance)
     assert output == expected_output
@@ -105,6 +127,16 @@ def test_type_bytes(class_, input_, expected_output):
 
 @pytest.mark.parametrize("class_,input_,expected_output", values)
 def test_bytes_to_type(class_, input_, expected_output):
+    uses_file = {
+        types.Abi,
+        types.Wasm,
+    }
+    if class_ in uses_file:
+        filename = Path().resolve() / expected_output
+        with open(filename, "rb") as f:
+            content = f.read()
+        expected_output = content
+
     instance = class_(input_)
     bytes_ = bytes(instance)
     print(f"{instance=}; {bytes_=}")
@@ -132,8 +164,8 @@ test_serialization = [
     (
         "string",
         "teststring",
-        "!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]"+
-        "^_`abcdefghijklmnopqrstuvwxyz{|}~ ", 
+        "!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]"
+        + "^_`abcdefghijklmnopqrstuvwxyz{|}~ ",
     ),
     ("string", "teststring", ""),
     ("int8", "tinteight", -128),
@@ -233,6 +265,10 @@ error_values = [
     (types.Asset, "99"),
     (types.Asset, "99. WAXXXXXX"),
     (types.Asset, "99."),
+    (types.Abi, "tests/unit/test_contract/invalid_simplecontract.abi"),
+    (types.Abi, "tests/unit/test_contract/incorrect_field_simplecontract.abi"),
+    (types.Wasm, "tests/unit/test_contract/invalid_simplecontract.wasm"),
+    (types.Wasm, "tests/unit/test_contract/odd_number_simplecontract.wasm"),
 ]
 
 

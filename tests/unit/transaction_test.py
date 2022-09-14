@@ -1,10 +1,12 @@
 import datetime as dt
 import json
+from pathlib import Path
 
 import pydantic
 import pytest
 
 import eospyo
+from eospyo.types import serialize_abi_json
 
 
 def test_create_authorization_using_dict():
@@ -113,6 +115,89 @@ def test_backend_transfer_transaction_serialization(net):
             "to": "user2",
             "quantity": str(2**61) + " WAX",
             "memo": "Trying EosPyo",
+        },
+    )
+
+    server_data_bytes = server_resp
+
+    assert backend_data_bytes == server_data_bytes
+
+
+def test_backend_set_wasm_code_transaction_serialization(net):
+    net = eospyo.WaxTestnet()
+
+    data = [
+        eospyo.Data(name="account", value=eospyo.types.Name("user2")),
+        eospyo.Data(name="vmtype", value=eospyo.types.Uint8(0)),
+        eospyo.Data(name="vmversion", value=eospyo.types.Uint8(0)),
+        eospyo.Data(
+            name="code",
+            filepath="/tests/unit/test_contract/simplecontract.wasm",
+        ),
+    ]
+    backend_data_bytes = b""
+    for d in data:
+        backend_data_bytes += bytes(d)
+
+    filename = (
+        Path().resolve() / "/tests/unit/test_contract/simplecontract.wasm"
+    )
+    with open(filename, "rb") as f:
+        content = f.read()
+
+    wasm_hexcode = eospyo.types.bin_to_hex(content)
+
+    server_resp = net.abi_json_to_bin(
+        account_name="eosio",
+        action="setcode",
+        json={
+            "account": "user2",
+            "vmtype": 0,
+            "vmversion": 0,
+            "code": wasm_hexcode,
+        },
+    )
+
+    server_data_bytes = server_resp
+
+    assert backend_data_bytes == server_data_bytes
+
+
+def test_backend_set_abi_transaction_serialization(net):
+    net = eospyo.WaxTestnet()
+
+    data = [
+        eospyo.Data(name="account", value=eospyo.types.Name("user2")),
+        eospyo.Data(name="vmtype", value=eospyo.types.Uint8(0)),
+        eospyo.Data(name="vmversion", value=eospyo.types.Uint8(0)),
+        eospyo.Data(
+            name="abi", filepath="/tests/unit/test_contract/simplecontract.abi"
+        ),
+    ]
+    backend_data_bytes = b""
+    for d in data:
+        backend_data_bytes += bytes(d)
+
+    filename = (
+        Path().resolve() / "/tests/unit/test_contract/simplecontract.abi"
+    )
+    with open(filename, "rb") as f:
+        content = f.read()
+
+    abi_json = json.load(content)
+
+    serialized_abi_json = serialize_abi_json(abi_json)
+
+    abi_hexcode = eospyo.types.bin_to_hex(serialized_abi_json)
+
+    server_resp = net.abi_json_to_bin(
+        account_name="eosio",
+        action="setabi",
+        json={
+            "account": "user2",
+            "vmtype": 0,
+            "vmversion": 0,
+            "abi": abi_hexcode,
         },
     )
 

@@ -1,7 +1,9 @@
 """Eosio data types."""
 
+import binascii
 import calendar
 import datetime as dt
+import json
 import re
 import struct
 import sys
@@ -348,6 +350,28 @@ class Symbol(EosioType):
         return cls(value=value)
 
 
+class Abi(EosioType):
+    filepath: str
+
+    def __bytes__(self):
+        return self.filepath
+
+    @classmethod
+    def from_bytes(cls, bytes_):
+        return cls(value=bytes_)
+
+
+class Wasm(EosioType):
+    filepath: str
+
+    def __bytes__(self):
+        return self.filepath
+
+    @classmethod
+    def from_bytes(cls, bytes_):
+        return cls(value=bytes_)
+
+
 class Bytes(EosioType):
     value: bytes
 
@@ -602,3 +626,13 @@ def from_string(type_: str) -> EosioType:
         msg = f"Type {type_} not found. List of available {types=}"
         raise ValueError(msg)
     return class_
+
+
+def hex_to_uint8_array(hex_string: str) -> Array:
+    return hex_string
+
+def bin_to_hex(bin: str) -> str:
+    return str(binascii.hexlify(bin).decode("utf-8"))
+
+def serialize_abi_json(abi_json: json) -> str:
+    return abi_json

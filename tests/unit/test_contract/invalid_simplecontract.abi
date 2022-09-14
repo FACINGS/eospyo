@@ -1,0 +1,168 @@
+{
+    "____comment": "This file was generated with eosio-abigen. DO NOT EDIT ",
+    "version": "eosio::abi/1.1",
+    "types": [],
+    "structs": [
+        {
+            "name": "clear",
+            "base": "",
+            "fields": []
+        },
+        {
+            "name": "messages",
+            "base": "",
+            "fields": [
+                {
+                    "name": "user",
+                    "type": "name"
+                },
+                {
+                    "name": "text",
+                    "type": "string"
+                }
+            ]
+        },
+        {
+            "name": "sendmsg",
+            "base": "",
+            "fields": [
+                {
+                    "name": "from",
+                    "type": "name"
+                },
+                {
+                    "name": "message",
+                    "type": "string"
+                }
+            ]
+        },
+        {
+            "name": "testname",
+            "base": "",
+            "fields": [
+                {
+                    "name": "var",
+                    "type": "name"
+                }
+            ]
+        },
+        {
+            "name": "teststring",
+            "base": "",
+            "fields": [
+                {
+                    "name": "var",
+                    "type": "string"
+                }
+            ]
+        },
+        {
+            "name": "tinteight",
+            "base": "",
+            "fields": [
+                {
+                    "name": "var",
+                    "type": "int8"
+                }
+            ]
+        },
+        {
+            "name": "tuinteight",
+            "base": "",
+            "fields": [
+                {
+                    "name": "var",
+                    "type": "uint8"
+                }
+            ]
+        },
+        {
+            "name": "tuintsixfour",
+            "base": "",
+            "fields": [
+                {
+                    "name": "var",
+                    "type": "uint64"
+                }
+            ]
+        },
+        {
+            "name": "tuintsixteen",
+            "base": "",
+            "fields": [
+                {
+                    "name": "var",
+                    "type": "uint16"
+                }
+            ]
+        },
+        {
+            "name": "tuintthirtwo",
+            "base": "",
+            "fields": [
+                {
+                    "name": "var",
+                    "type": "uint32"
+                }
+            ]
+        }
+    ],
+    "actions": [
+        {
+            "name": "clear",
+            "type": "clear",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "sendmsg",
+            "type": "sendmsg",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "testname",
+            "type": "testname",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "teststring",
+            "type": "teststring",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "tinteight",
+            "type": "tinteight",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "tuinteight",
+            "type": "tuinteight",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "tuintsixfour",
+            "type": "tuintsixfour",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "tuintsixteen",
+            "type": "tuintsixteen",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "tuintthirtwo",
+            "type": "tuintthirtwo",
+            "ricardian_contract": ""
+        }
+    ],
+    "tables": [
+        {
+            "name": "messages",
+            "type": "messages",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        }
+    ],
+    "ricardian_clauses": [],
+    "variants": []
+}
