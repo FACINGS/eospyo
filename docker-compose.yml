@@ -14,7 +14,8 @@ x-common: &commons
 
 services:
     nodeos:
-        image: eosio/eosio:6912e2e5c1dd88cdbfb8854958e3690c3c3c3592
+        build: .
+        image: leap:3.1.0
         container_name: nodeos
         command: ["bash", "/sample_contract/run_nodeos.sh"]
 
@@ -33,7 +34,8 @@ services:
 
 
     deployer:
-        image: eosio/eosio:6912e2e5c1dd88cdbfb8854958e3690c3c3c3592
+        build: .
+        image: leap:3.1.0
         container_name: deployer
         command: ["bash", "/sample_contract/prepare_nodeos.sh"]
 
