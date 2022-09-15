@@ -96,14 +96,14 @@ values = [
         b"c\x00\x00\x00\x00\x00\x00\x00\x00WAX\x00\x00\x00\x00",
     ),
     (
-        types.Abi,
-        "tests/unit/test_contract/simplecontract.abi",
-        "tests/unit/test_contract/bin_files/abi_bin_1.txt",
+        types.Wasm,
+        "test_contract/test_contract.wasm",
+        "test_contract/bin_files/wasm_pass_bytes.bin",
     ),
     (
-        types.Wasm,
-        "tests/unit/test_contract/simplecontract.wasm",
-        "tests/unit/test_contract/bin_files/wasm_bin_1.txt",
+        types.Abi,
+        "test_contract/test_contract.abi",
+        "test_contract/bin_files/abi_pass_bytes.bin",
     ),
 ]
 
@@ -115,13 +115,15 @@ def test_type_bytes(class_, input_, expected_output):
         types.Wasm,
     }
     if class_ in uses_file:
-        filename = Path().resolve() / expected_output
+        filename = str(Path().resolve()) + "/" + expected_output
         with open(filename, "rb") as f:
             content = f.read()
+        print(repr(content))
         expected_output = content
 
     instance = class_(input_)
     output = bytes(instance)
+    print("bytes:\n" + str(output))
     assert output == expected_output
 
 
@@ -265,10 +267,10 @@ error_values = [
     (types.Asset, "99"),
     (types.Asset, "99. WAXXXXXX"),
     (types.Asset, "99."),
-    (types.Abi, "tests/unit/test_contract/invalid_simplecontract.abi"),
-    (types.Abi, "tests/unit/test_contract/incorrect_field_simplecontract.abi"),
-    (types.Wasm, "tests/unit/test_contract/invalid_simplecontract.wasm"),
-    (types.Wasm, "tests/unit/test_contract/odd_number_simplecontract.wasm"),
+    (types.Abi, "test_contract/invalid_test_contract.abi"),
+    (types.Abi, "test_contract/extra_field_test_contract.abi"),
+    (types.Wasm, "test_contract/invalid_test_contract - 2.wasm"),
+    (types.Wasm, "test_contract/odd_number_test_contract.wasm"),
 ]
 
 

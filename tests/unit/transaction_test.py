@@ -132,7 +132,7 @@ def test_backend_set_wasm_code_transaction_serialization(net):
         eospyo.Data(name="vmversion", value=eospyo.types.Uint8(0)),
         eospyo.Data(
             name="code",
-            filepath="/tests/unit/test_contract/simplecontract.wasm",
+            value=eospyo.types.Wasm("test_contract/simplecontract.wasm"),
         ),
     ]
     backend_data_bytes = b""
@@ -140,7 +140,7 @@ def test_backend_set_wasm_code_transaction_serialization(net):
         backend_data_bytes += bytes(d)
 
     filename = (
-        Path().resolve() / "/tests/unit/test_contract/simplecontract.wasm"
+        str(Path().resolve()) + "/" + "test_contract/simplecontract.wasm"
     )
     with open(filename, "rb") as f:
         content = f.read()
@@ -171,16 +171,15 @@ def test_backend_set_abi_transaction_serialization(net):
         eospyo.Data(name="vmtype", value=eospyo.types.Uint8(0)),
         eospyo.Data(name="vmversion", value=eospyo.types.Uint8(0)),
         eospyo.Data(
-            name="abi", filepath="/tests/unit/test_contract/simplecontract.abi"
+            name="abi",
+            value=eospyo.types.Abi("test_contract/simplecontract.abi"),
         ),
     ]
     backend_data_bytes = b""
     for d in data:
         backend_data_bytes += bytes(d)
 
-    filename = (
-        Path().resolve() / "/tests/unit/test_contract/simplecontract.abi"
-    )
+    filename = str(Path().resolve()) + "/" + "test_contract/simplecontract.abi"
     with open(filename, "rb") as f:
         content = f.read()
 

@@ -8,6 +8,7 @@ import re
 import struct
 import sys
 from abc import ABC, abstractmethod
+from pathlib import Path
 
 import pydantic
 
@@ -350,28 +351,6 @@ class Symbol(EosioType):
         return cls(value=value)
 
 
-class Abi(EosioType):
-    filepath: str
-
-    def __bytes__(self):
-        return self.filepath
-
-    @classmethod
-    def from_bytes(cls, bytes_):
-        return cls(value=bytes_)
-
-
-class Wasm(EosioType):
-    filepath: str
-
-    def __bytes__(self):
-        return self.filepath
-
-    @classmethod
-    def from_bytes(cls, bytes_):
-        return cls(value=bytes_)
-
-
 class Bytes(EosioType):
     value: bytes
 
@@ -628,11 +607,66 @@ def from_string(type_: str) -> EosioType:
     return class_
 
 
-def hex_to_uint8_array(hex_string: str) -> Array:
-    return hex_string
+class Abi(EosioType):
+    value: str
 
-def bin_to_hex(bin: str) -> str:
+    def __bytes__(self):
+        return self.value
+
+    @classmethod
+    def from_bytes(cls, bytes_):
+        return cls(value=bytes_)
+
+
+class Wasm(EosioType):
+    value: str
+
+    def __bytes__(self):
+        filename = str(Path().resolve()) + "/" + self.value
+        with open(filename, "rb") as f:
+            content = f.read()
+        hexcode = bin_to_hex(content)
+        uint8_array = hex_to_uint8_array(hexcode)
+        return bytes(uint8_array)
+
+    @classmethod
+    def from_bytes(cls, bytes_):
+        return bytes_
+
+
+def hex_to_uint8_array(hex_string: str) -> Array:
+
+    if len(hex_string) % 2:
+        msg = f"Odd number of hex digits in input file."
+        raise ValueError(msg)
+
+    bin_len = int(len(hex_string) / 2)
+    uint8_values = []
+
+    for i in range(0, bin_len):
+        try:
+            x = int(hex_string[(i * 2) : (i * 2 + 2)], base=16)
+        except:
+            msg = f"Issue converting hex to uint 8 array, Invalid hex string."
+            raise ValueError(msg)
+        uint8_values.append(x)
+
+    uint8_array = Array(type_=Uint8, values=uint8_values)
+    return uint8_array
+
+
+def bin_to_hex(bin: bytes) -> str:
+    # if type(bin) != 'bytes':
+    #    msg = f"Expected string containing hex digits."
+    #    raise ValueError(msg)
     return str(binascii.hexlify(bin).decode("utf-8"))
+
 
 def serialize_abi_json(abi_json: json) -> str:
     return abi_json
+
+
+def save_bytes_to_file(filepath: str, output_file: str):
+    bytes_to_save = bytes(Wasm(filepath))
+    with open(output_file, "wb") as f:
+        f.write(bytes_to_save)
