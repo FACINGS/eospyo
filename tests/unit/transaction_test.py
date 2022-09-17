@@ -1,9 +1,10 @@
 import datetime as dt
 import json
 
-import eospyo
 import pydantic
 import pytest
+
+import eospyo
 
 
 def test_create_authorization_using_dict():
@@ -93,7 +94,7 @@ def test_backend_transfer_transaction_serialization(net):
         eospyo.Data(name="to", value=eospyo.types.Name("user2")),
         eospyo.Data(
             name="quantity",
-            value=eospyo.types.Asset(str(2 ** 61) + " WAX"),
+            value=eospyo.types.Asset(str(2**61) + " WAX"),
         ),
         eospyo.Data(
             name="memo",
@@ -110,7 +111,7 @@ def test_backend_transfer_transaction_serialization(net):
         json={
             "from": "user2",
             "to": "user2",
-            "quantity": str((2 ** 61)) + " WAX",
+            "quantity": str(2**61) + " WAX",
             "memo": "Trying EosPyo",
         },
     )
