@@ -9,6 +9,7 @@ import struct
 import sys
 from abc import ABC, abstractmethod
 from pathlib import Path
+from typing import Dict, List
 
 import pydantic
 
@@ -610,8 +611,155 @@ def from_string(type_: str) -> EosioType:
 class Abi(EosioType):
     value: str
 
+    def import_abi_data(self, json_data):
+        version = String(json_data["version"])
+        type_list = []
+        struct_list = []
+        action_list = []
+        table_list = []
+
+        for value in json_data["types"]:
+            type_list.append(AbiType(value))
+        for value in json_data["structs"]:
+            struct_list.append(AbiStruct(value))
+        print("list: " + str(struct_list))
+        for value in json_data["actions"]:
+            action_list.append(AbiAction(value))
+        for value in json_data["tables"]:
+            table_list.append(AbiTable(value))
+
+        types = (
+            Array(type_=AbiType, values=type_list) if type_list else String("")
+        )
+        structs = (
+            Array(type_=AbiStruct, values=struct_list)
+            if struct_list
+            else String("")
+        )
+        print(structs)
+        actions = (
+            Array(type_=AbiAction, values=action_list)
+            if action_list
+            else String("")
+        )
+        tables = (
+            Array(type_=AbiTable, values=table_list)
+            if table_list
+            else String("")
+        )
+        ricardian_clauses = String("")
+        error_messages = String("")
+        abi_extensions = String("")
+        variants = String("")
+        action_results = String("")
+        kv_tables = String("")
+
+        abi_components = [
+            version,
+            types,
+            structs,
+            actions,
+            tables,
+            ricardian_clauses,
+            error_messages,
+            abi_extensions,
+            variants,
+            action_results,
+            kv_tables,
+        ]
+
+        return abi_components
+
     def __bytes__(self):
-        return self.value
+        filename = str(Path().resolve()) + "/" + self.value
+        with open(filename, "r") as f:
+            content = json.load(f)
+        abi_components = self.import_abi_data(content)
+
+        abi_bytes = []
+        for value in abi_components:
+            abi_bytes += bytes(value)
+
+        # hexcode = bin_to_hex(content)
+        # uint8_array = hex_to_uint8_array(hexcode)
+        # print(bytes(uint8_array))
+        return bytes(abi_bytes)
+
+    @classmethod
+    def from_bytes(cls, bytes_):
+        return cls(value=bytes_)
+
+
+class AbiType(EosioType):
+    value: Dict[str, str]
+
+    def __bytes__(self):
+        new_type_name = String(self.value["new_type_name"])
+        json_type = String(self.value["type"])
+        return bytes(new_type_name) + bytes(json_type)
+
+    @classmethod
+    def from_bytes(cls, bytes_):
+        return cls(value=bytes_)
+
+
+class AbiStruct(EosioType):
+    value: Dict
+
+    def __bytes__(self):
+        name = String(self.value["name"])
+        base = String(self.value["base"])
+        print("name: " + str(name))
+        field_bytes = []
+        for field in self.value["fields"]:
+            field_name = String(field["name"])
+            field_type = String(field["type"])
+            field_bytes.append(bytes(field_name) + bytes(field_type))
+
+        field_bytes_array = Array(type_=Bytes, values=field_bytes)
+        print(bytes(name) + bytes(base) + bytes(field_bytes_array))
+        return bytes(name) + bytes(base) + bytes(field_bytes_array)
+
+    @classmethod
+    def from_bytes(cls, bytes_):
+        return cls(value=bytes_)
+
+
+class AbiAction(EosioType):
+    value: Dict
+
+    def __bytes__(self):
+        name = Name(self.value["name"])
+        json_type = String(self.value["type"])
+        ricardian_contract = String(self.value["ricardian_contract"])
+
+        return bytes(name) + bytes(json_type) + bytes(ricardian_contract)
+
+    @classmethod
+    def from_bytes(cls, bytes_):
+        return cls(value=bytes_)
+
+
+class AbiTable(EosioType):
+    value: Dict
+
+    def __bytes__(self):
+        name = Name(self.value["name"])
+        index_type = String(self.value["index_type"])
+        key_names = self.value["key_names"]
+        key_types = self.value["key_types"]
+        json_type = String(self.value["type"])
+
+        key_names_array = Array(type_=String, values=key_names)
+        key_types_array = Array(type_=String, values=key_types)
+
+        return (
+            bytes(name)
+            + bytes(index_type)
+            + bytes(key_names_array)
+            + bytes(key_types_array)
+            + bytes(json_type)
+        )
 
     @classmethod
     def from_bytes(cls, bytes_):
