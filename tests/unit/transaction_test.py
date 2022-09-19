@@ -327,7 +327,7 @@ def test_e2e_with_transaction_ok(net):
         eospyo.Data(name="from", value=eospyo.types.Name("user2")),
         eospyo.Data(
             name="message",
-            value=eospyo.types.String("hello"),
+            value=eospyo.types.String("I cant say hello again"),
         ),
     ]
     trans = eospyo.Transaction(
