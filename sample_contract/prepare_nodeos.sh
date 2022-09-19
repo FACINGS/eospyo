@@ -10,7 +10,7 @@
 # EOS5sRtLNDzsd9arp7J7qYSRRTcaLnRQFVkYtRuHn8tPeNS8D7DVM  # user2
 # 5K5UHY2LjHw2QQFJKCd2PdF7hxPJnknMfQLhxbEguJJttr1DFdp
 #
-# EOS7dwjRjyyVPTg4UQQ3WozRhFLmspew8SP8BgbpTjrEPYs1c1rHV
+# EOS7dwjRjyyVPTg4UQQ3WozRhFLmspew8SP8BgbpTjrEPYs1c1rHV  # eosio.token
 # 5Je7woBXuxQBkpxit35SHZMap9SdKZLoeVBRKxntoMq2NuuN1rL
 #
 # EOS8EN2WjAsysGmagNmorihtv4wj5Mfzg1vvCQA1L6q4sN2X63BiK
@@ -40,6 +40,10 @@ cleos \
     wallet import \
     --private-key 5K5UHY2LjHw2QQFJKCd2PdF7hxPJnknMfQLhxbEguJJttr1DFdp
 
+cleos \
+    wallet import \
+    --private-key 5Je7woBXuxQBkpxit35SHZMap9SdKZLoeVBRKxntoMq2NuuN1rL
+
 
 # we try it twice just in case the we get an "time exceeded" error
 for value in {1, 2}
@@ -60,12 +64,26 @@ do
         create account eosio user2 \
         EOS5sRtLNDzsd9arp7J7qYSRRTcaLnRQFVkYtRuHn8tPeNS8D7DVM
 
-
     echo "======================================================"
     echo "Deploy contract simplecontract to user2"
     cleos \
         --url http://nodeos:8888 \
         set contract user2 . \
         /sample_contract/simplecontract.wasm /sample_contract/simplecontract.abi
+
+
+    echo "======================================================"
+    echo "Create account eosio.token"  # eosio.token core account
+    cleos \
+        --url http://nodeos:8888 \
+        create account eosio eosio.token \
+        EOS7dwjRjyyVPTg4UQQ3WozRhFLmspew8SP8BgbpTjrEPYs1c1rHV
+
+    echo "======================================================"
+    echo "Deploy eosio.token contract"
+    cleos \
+        --url http://nodeos:8888 \
+        set contract eosio.token . \
+        /sample_contract/eosio_token.wasm /sample_contract/eosio_token.abi
 
 done

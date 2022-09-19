@@ -88,7 +88,7 @@ def test_backend_serialization_matches_server_serialization(net):
 
 
 def test_backend_transfer_transaction_serialization(net):
-    net = eospyo.WaxTestnet()
+    net = eospyo.Local()
     data = [
         eospyo.Data(name="from", value=eospyo.types.Name("user2")),
         eospyo.Data(name="to", value=eospyo.types.Name("user2")),
