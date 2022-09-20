@@ -118,12 +118,10 @@ def test_type_bytes(class_, input_, expected_output):
         filename = str(Path().resolve()) + "/" + expected_output
         with open(filename, "rb") as f:
             content = f.read()
-        print(repr(content))
         expected_output = content
 
     instance = class_(input_)
     output = bytes(instance)
-    print("bytes:\n" + str(output))
     assert output == expected_output
 
 

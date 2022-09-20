@@ -168,26 +168,17 @@ def test_backend_set_abi_transaction_serialization(net):
 
     data = [
         eospyo.Data(name="account", value=eospyo.types.Name("user2")),
-        eospyo.Data(name="vmtype", value=eospyo.types.Uint8(0)),
-        eospyo.Data(name="vmversion", value=eospyo.types.Uint8(0)),
         eospyo.Data(
             name="abi",
-            value=eospyo.types.Abi("test_contract/simplecontract.abi"),
+            value=eospyo.types.Abi("test_contract/test_contract.abi"),
         ),
     ]
     backend_data_bytes = b""
     for d in data:
         backend_data_bytes += bytes(d)
 
-    filename = str(Path().resolve()) + "/" + "test_contract/simplecontract.abi"
-    with open(filename, "rb") as f:
-        content = f.read()
-
-    abi_json = json.load(content)
-
-    serialized_abi_json = serialize_abi_json(abi_json)
-
-    abi_hexcode = eospyo.types.bin_to_hex(serialized_abi_json)
+    abi_test = bytes(eospyo.types.Abi("test_contract/test_contract.abi"))
+    abi_hexcode = eospyo.types.bin_to_hex(abi_test)
 
     server_resp = net.abi_json_to_bin(
         account_name="eosio",
