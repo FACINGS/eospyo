@@ -98,13 +98,13 @@ values = [
     ),
     (
         types.Wasm,
-        "test_contract/test_contract.wasm",
-        "test_contract/bin_files/wasm_pass_bytes.bin",
+        "tests/unit/test_contract/test_contract.wasm",
+        "tests/unit/test_contract/bin_files/wasm_pass_bytes.bin",
     ),
     (
         types.Abi,
-        "test_contract/test_contract.abi",
-        "test_contract/bin_files/abi_pass_bytes.bin",
+        "tests/unit/test_contract/test_contract.abi",
+        "tests/unit/test_contract/bin_files/abi_pass_bytes.bin",
     ),
 ]
 
