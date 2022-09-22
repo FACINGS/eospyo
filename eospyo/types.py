@@ -776,10 +776,10 @@ class AbiTable(EosioType):
 
         return (
             bytes(name)
-            + bytes(index_type)
-            + bytes(key_names_array)
-            + bytes(key_types_array)
-            + bytes(json_type)
+            + bytes(index_type)  # noqa: W503
+            + bytes(key_names_array)  # noqa: W503
+            + bytes(key_types_array)  # noqa: W503
+            + bytes(json_type)  # noqa: W503
         )
 
     @classmethod
@@ -806,7 +806,7 @@ class Wasm(EosioType):
 def hex_to_uint8_array(hex_string: str) -> Array:
 
     if len(hex_string) % 2:
-        msg = f"Odd number of hex digits in input file."
+        msg = "Odd number of hex digits in input file."
         raise ValueError(msg)
 
     bin_len = int(len(hex_string) / 2)
@@ -814,9 +814,9 @@ def hex_to_uint8_array(hex_string: str) -> Array:
 
     for i in range(0, bin_len):
         try:
-            x = int(hex_string[(i * 2) : (i * 2 + 2)], base=16)
-        except:
-            msg = f"Issue converting hex to uint 8 array, Invalid hex string."
+            x = int(hex_string[(i * 2): (i * 2 + 2)], base=16)
+        except ValueError:
+            msg = "Issue converting hex to uint 8 array, Invalid hex string."
             raise ValueError(msg)
         uint8_values.append(x)
 
