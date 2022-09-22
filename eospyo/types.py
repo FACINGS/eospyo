@@ -814,7 +814,7 @@ def hex_to_uint8_array(hex_string: str) -> Array:
 
     for i in range(0, bin_len):
         try:
-            x = int(hex_string[(i * 2): (i * 2 + 2)], base=16)
+            x = int(hex_string[(i * 2) : (i * 2 + 2)], base=16)  # NOQA: E203
         except ValueError:
             msg = "Issue converting hex to uint 8 array, Invalid hex string."
             raise ValueError(msg)
