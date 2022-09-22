@@ -9,7 +9,7 @@ import struct
 import sys
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Dict, List
+from typing import Any, Dict, List
 
 import pydantic
 
@@ -608,23 +608,45 @@ def from_string(type_: str) -> EosioType:
     return class_
 
 
+class AbiSchema(pydantic.BaseModel):
+    comment: str = None
+    version: str
+    types: List
+    structs: List
+    actions: List
+    tables: List
+    ricardian_clauses: List = None
+    abi_extensions: List = None
+    variants: List = None
+    action_results: List = None
+    kv_tables: dict = None
+    abi_extensions: List = None
+
+    class Config:
+        extra = "forbid"
+        fields = {"comment": "____comment"}
+
+
 class Abi(EosioType):
     value: str
 
     def import_abi_data(self, json_data):
-        version = String(json_data["version"])
+
+        abi_dict = AbiSchema(**json_data)
+
+        version = String(abi_dict.version)
         type_list = []
         struct_list = []
         action_list = []
         table_list = []
 
-        for value in json_data["types"]:
+        for value in abi_dict.types:
             type_list.append(AbiType(value))
-        for value in json_data["structs"]:
+        for value in abi_dict.structs:
             struct_list.append(AbiStruct(value))
-        for value in json_data["actions"]:
+        for value in abi_dict.actions:
             action_list.append(AbiAction(value))
-        for value in json_data["tables"]:
+        for value in abi_dict.tables:
             table_list.append(AbiTable(value))
 
         types = (
@@ -668,18 +690,22 @@ class Abi(EosioType):
 
         return abi_components
 
-    def __bytes__(self):
-        filename = str(Path().resolve()) + "/" + self.value
-        with open(filename, "r") as f:
-            content = json.load(f)
-        abi_components = self.import_abi_data(content)
-
+    def abi_bin_to_hex(self, abi_components):
         abi_bytes = b""
         for value in abi_components:
             abi_bytes += bytes(value)
 
-        hexcode = bin_to_hex(abi_bytes)
+        return bin_to_hex(abi_bytes)
+
+    def __bytes__(self):
+        filename = str(Path().resolve()) + "/" + self.value
+        with open(filename, "r") as f:
+            content = json.load(f)
+
+        abi_components = self.import_abi_data(content)
+        hexcode = self.abi_bin_to_hex(abi_components)
         uint8_array = hex_to_uint8_array(hexcode)
+
         return bytes(uint8_array)
 
     @classmethod
@@ -701,7 +727,7 @@ class AbiType(EosioType):
 
 
 class AbiStruct(EosioType):
-    value: Dict
+    value: Dict[str, Any]
 
     def __bytes__(self):
         name = String(self.value["name"])
@@ -721,7 +747,7 @@ class AbiStruct(EosioType):
 
 
 class AbiAction(EosioType):
-    value: Dict
+    value: Dict[str, str]
 
     def __bytes__(self):
         name = Name(self.value["name"])
@@ -736,7 +762,7 @@ class AbiAction(EosioType):
 
 
 class AbiTable(EosioType):
-    value: Dict
+    value: Dict[str, Any]
 
     def __bytes__(self):
         name = Name(self.value["name"])
@@ -799,9 +825,6 @@ def hex_to_uint8_array(hex_string: str) -> Array:
 
 
 def bin_to_hex(bin: bytes) -> str:
-    # if type(bin) != 'bytes':
-    #    msg = f"Expected string containing hex digits."
-    #    raise ValueError(msg)
     return str(binascii.hexlify(bin).decode("utf-8"))
 
 
@@ -809,7 +832,7 @@ def serialize_abi_json(abi_json: json) -> str:
     return abi_json
 
 
-def save_bytes_to_file(filepath: str, output_file: str):
-    bytes_to_save = bytes(Wasm(filepath))
+def save_bytes_to_file(eosio_type: EosioType, filepath: str, output_file: str):
+    bytes_to_save = bytes(eosio_type(filepath))
     with open(output_file, "wb") as f:
         f.write(bytes_to_save)

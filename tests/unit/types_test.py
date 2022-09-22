@@ -1,6 +1,7 @@
 """type tests."""
 
 import datetime as dt
+import json
 from pathlib import Path
 
 import pydantic
@@ -131,17 +132,12 @@ def test_bytes_to_type(class_, input_, expected_output):
         types.Abi,
         types.Wasm,
     }
-    if class_ in uses_file:
-        filename = Path().resolve() / expected_output
-        with open(filename, "rb") as f:
-            content = f.read()
-        expected_output = content
-
-    instance = class_(input_)
-    bytes_ = bytes(instance)
-    print(f"{instance=}; {bytes_=}")
-    new_instance = class_.from_bytes(bytes_)
-    assert new_instance == instance
+    if class_ not in uses_file:
+        instance = class_(input_)
+        bytes_ = bytes(instance)
+        print(f"{instance=}; {bytes_=}")
+        new_instance = class_.from_bytes(bytes_)
+        assert new_instance == instance
 
 
 @pytest.mark.parametrize("class_,input_,expected_output", values)
@@ -264,11 +260,7 @@ error_values = [
     (types.Asset, "99 "),
     (types.Asset, "99"),
     (types.Asset, "99. WAXXXXXX"),
-    (types.Asset, "99."),
-    (types.Abi, "test_contract/invalid_test_contract.abi"),
-    (types.Abi, "test_contract/extra_field_test_contract.abi"),
-    (types.Wasm, "test_contract/invalid_test_contract - 2.wasm"),
-    (types.Wasm, "test_contract/odd_number_test_contract.wasm"),
+    (types.Asset, "99.")
 ]
 
 

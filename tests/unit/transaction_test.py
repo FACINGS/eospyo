@@ -1,3 +1,4 @@
+import binascii
 import datetime as dt
 import json
 from pathlib import Path
@@ -124,7 +125,7 @@ def test_backend_transfer_transaction_serialization(net):
 
 
 def test_backend_set_wasm_code_transaction_serialization(net):
-    net = eospyo.WaxTestnet()
+    net = eospyo.Local()
 
     data = [
         eospyo.Data(name="account", value=eospyo.types.Name("user2")),
@@ -132,16 +133,14 @@ def test_backend_set_wasm_code_transaction_serialization(net):
         eospyo.Data(name="vmversion", value=eospyo.types.Uint8(0)),
         eospyo.Data(
             name="code",
-            value=eospyo.types.Wasm("test_contract/simplecontract.wasm"),
+            value=eospyo.types.Wasm("test_contract/test_contract.wasm"),
         ),
     ]
     backend_data_bytes = b""
     for d in data:
         backend_data_bytes += bytes(d)
 
-    filename = (
-        str(Path().resolve()) + "/" + "test_contract/simplecontract.wasm"
-    )
+    filename = str(Path().resolve()) + "/" + "test_contract/test_contract.wasm"
     with open(filename, "rb") as f:
         content = f.read()
 
@@ -164,7 +163,7 @@ def test_backend_set_wasm_code_transaction_serialization(net):
 
 
 def test_backend_set_abi_transaction_serialization(net):
-    net = eospyo.WaxTestnet()
+    net = eospyo.Local()
 
     data = [
         eospyo.Data(name="account", value=eospyo.types.Name("user2")),
@@ -177,16 +176,20 @@ def test_backend_set_abi_transaction_serialization(net):
     for d in data:
         backend_data_bytes += bytes(d)
 
-    abi_test = bytes(eospyo.types.Abi("test_contract/test_contract.abi"))
-    abi_hexcode = eospyo.types.bin_to_hex(abi_test)
+    abi = eospyo.types.Abi("test_contract/test_contract.abi")
+
+    filename = str(Path().resolve()) + "/" + "test_contract/test_contract.abi"
+    with open(filename, "r") as f:
+        content = json.load(f)
+
+    abi_components = abi.import_abi_data(content)
+    abi_hexcode = abi.abi_bin_to_hex(abi_components)
 
     server_resp = net.abi_json_to_bin(
         account_name="eosio",
         action="setabi",
         json={
             "account": "user2",
-            "vmtype": 0,
-            "vmversion": 0,
             "abi": abi_hexcode,
         },
     )

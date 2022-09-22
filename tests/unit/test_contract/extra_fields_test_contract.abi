@@ -25,5 +25,6 @@
     "kv_tables": {},
     "ricardian_clauses": [],
     "variants": [],
-    "action_results": []
+    "action_results": [],
+    "extra_field": []
 }
