@@ -4,12 +4,14 @@
 import datetime as dt
 import hashlib
 import json
+import logging
 import struct
 from typing import List, Tuple
 
 import pydantic
 
 from . import types, utils
+from ._version import DEPRECATION_WARNING
 from .net import Net
 
 
@@ -338,6 +340,7 @@ class SignedTransaction(LinkedTransaction):
         return bytes_.hex()
 
     def send(self):
+        logging.warning(DEPRECATION_WARNING)
         resp = self.net.push_transaction(transaction=self)
         return resp
 

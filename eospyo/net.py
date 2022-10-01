@@ -5,6 +5,7 @@ Nodeos api reference:
 https://developers.eos.io/manuals/eos/latest/nodeos/plugins/chain_api_plugin/api-reference/index
 """
 
+import logging
 import typing
 from urllib.parse import urljoin
 
@@ -12,7 +13,7 @@ import httpx
 import pydantic
 
 from eospyo import exc
-from eospyo._version import __version__
+from eospyo._version import DEPRECATION_WARNING, __version__
 
 
 class Net(pydantic.BaseModel):
@@ -29,6 +30,8 @@ class Net(pydantic.BaseModel):
         payload: typing.Optional[dict] = dict(),
         verb: str = "POST",
     ):
+        logging.warning(DEPRECATION_WARNING)
+
         url = urljoin(self.host, endpoint)
         headers = {"user-agent": f"Eospyo/{__version__}"}
 
