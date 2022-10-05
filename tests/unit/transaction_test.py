@@ -1,13 +1,9 @@
-import binascii
 import datetime as dt
 import json
-from pathlib import Path
-
-import pydantic
-import pytest
 
 import eospyo
-from eospyo.types import serialize_abi_json
+import pydantic
+import pytest
 
 
 def test_create_authorization_using_dict():
@@ -91,7 +87,6 @@ def test_backend_serialization_matches_server_serialization(net):
 
 
 def test_backend_transfer_transaction_serialization(net):
-    net = eospyo.Local()
     data = [
         eospyo.Data(name="from", value=eospyo.types.Name("user2")),
         eospyo.Data(name="to", value=eospyo.types.Name("user2")),
@@ -125,7 +120,9 @@ def test_backend_transfer_transaction_serialization(net):
 
 
 def test_backend_set_wasm_code_transaction_serialization(net):
-    net = eospyo.Local()
+    wasm_file = eospyo.types.load_bin_from_path(
+        "test_contract/test_contract.wasm"
+    )
 
     data = [
         eospyo.Data(name="account", value=eospyo.types.Name("user2")),
@@ -133,18 +130,14 @@ def test_backend_set_wasm_code_transaction_serialization(net):
         eospyo.Data(name="vmversion", value=eospyo.types.Uint8(0)),
         eospyo.Data(
             name="code",
-            value=eospyo.types.Wasm("tests/unit/test_contract/test_contract.wasm"),
+            value=eospyo.types.Wasm(wasm_file),
         ),
     ]
     backend_data_bytes = b""
     for d in data:
         backend_data_bytes += bytes(d)
 
-    filename = str(Path().resolve()) + "/" + "tests/unit/test_contract/test_contract.wasm"
-    with open(filename, "rb") as f:
-        content = f.read()
-
-    wasm_hexcode = eospyo.types.bin_to_hex(content)
+    wasm_hexcode = eospyo.types.bin_to_hex(wasm_file)
 
     server_resp = net.abi_json_to_bin(
         account_name="eosio",
@@ -163,26 +156,24 @@ def test_backend_set_wasm_code_transaction_serialization(net):
 
 
 def test_backend_set_abi_transaction_serialization(net):
-    net = eospyo.Local()
+    abi_file = eospyo.types.load_dict_from_path(
+        "test_contract/test_contract.abi"
+    )
 
     data = [
         eospyo.Data(name="account", value=eospyo.types.Name("user2")),
         eospyo.Data(
             name="abi",
-            value=eospyo.types.Abi("tests/unit/test_contract/test_contract.abi"),
+            value=eospyo.types.Abi(abi_file),
         ),
     ]
     backend_data_bytes = b""
     for d in data:
         backend_data_bytes += bytes(d)
 
-    abi = eospyo.types.Abi("tests/unit/test_contract/test_contract.abi")
+    abi = eospyo.types.Abi(abi_file)
 
-    filename = str(Path().resolve()) + "/" + "tests/unit/test_contract/test_contract.abi"
-    with open(filename, "r") as f:
-        content = json.load(f)
-
-    abi_components = abi.import_abi_data(content)
+    abi_components = abi.import_abi_data(abi_file)
     abi_hexcode = abi.abi_bin_to_hex(abi_components)
 
     server_resp = net.abi_json_to_bin(

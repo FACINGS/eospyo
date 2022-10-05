@@ -628,7 +628,7 @@ class AbiSchema(pydantic.BaseModel):
 
 
 class Abi(EosioType):
-    value: str
+    value: dict
 
     def import_abi_data(self, json_data):
 
@@ -698,11 +698,7 @@ class Abi(EosioType):
         return bin_to_hex(abi_bytes)
 
     def __bytes__(self):
-        filename = str(Path().resolve()) + "/" + self.value
-        with open(filename, "r") as f:
-            content = json.load(f)
-
-        abi_components = self.import_abi_data(content)
+        abi_components = self.import_abi_data(self.value)
         hexcode = self.abi_bin_to_hex(abi_components)
         uint8_array = hex_to_uint8_array(hexcode)
 
@@ -788,13 +784,10 @@ class AbiTable(EosioType):
 
 
 class Wasm(EosioType):
-    value: str
+    value: bytes
 
     def __bytes__(self):
-        filename = str(Path().resolve()) + "/" + self.value
-        with open(filename, "rb") as f:
-            content = f.read()
-        hexcode = bin_to_hex(content)
+        hexcode = bin_to_hex(self.value)
         uint8_array = hex_to_uint8_array(hexcode)
         return bytes(uint8_array)
 
@@ -828,11 +821,19 @@ def bin_to_hex(bin: bytes) -> str:
     return str(binascii.hexlify(bin).decode("utf-8"))
 
 
-def serialize_abi_json(abi_json: json) -> str:
-    return abi_json
-
-
 def save_bytes_to_file(eosio_type: EosioType, filepath: str, output_file: str):
     bytes_to_save = bytes(eosio_type(filepath))
     with open(output_file, "wb") as f:
         f.write(bytes_to_save)
+
+
+def load_bin_from_path(path: str):
+    filename = str(Path().resolve()) + "/" + path
+    with open(filename, "rb") as f:
+        return f.read()
+
+
+def load_dict_from_path(path: str):
+    filename = str(Path().resolve()) + "/" + path
+    with open(filename, "r") as f:
+        return json.load(f)

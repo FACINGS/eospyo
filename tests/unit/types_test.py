@@ -98,29 +98,19 @@ values = [
     ),
     (
         types.Wasm,
-        "tests/unit/test_contract/test_contract.wasm",
-        "tests/unit/test_contract/bin_files/wasm_pass_bytes.bin",
+        types.load_bin_from_path("test_contract/test_contract.wasm"),
+        types.load_bin_from_path("test_contract/bin_files/wasm_pass_bytes.bin"),
     ),
     (
         types.Abi,
-        "tests/unit/test_contract/test_contract.abi",
-        "tests/unit/test_contract/bin_files/abi_pass_bytes.bin",
+        types.load_dict_from_path("test_contract/test_contract.abi"),
+        types.load_bin_from_path("test_contract/bin_files/abi_pass_bytes.bin"),
     ),
 ]
 
 
 @pytest.mark.parametrize("class_,input_,expected_output", values)
 def test_type_bytes(class_, input_, expected_output):
-    uses_file = {
-        types.Abi,
-        types.Wasm,
-    }
-    if class_ in uses_file:
-        filename = str(Path().resolve()) + "/" + expected_output
-        with open(filename, "rb") as f:
-            content = f.read()
-        expected_output = content
-
     instance = class_(input_)
     output = bytes(instance)
     assert output == expected_output
@@ -135,7 +125,6 @@ def test_bytes_to_type(class_, input_, expected_output):
     if class_ not in uses_file:
         instance = class_(input_)
         bytes_ = bytes(instance)
-        print(f"{instance=}; {bytes_=}")
         new_instance = class_.from_bytes(bytes_)
         assert new_instance == instance
 
@@ -295,7 +284,6 @@ def test_array_to_bytes(type_, input_, expected_output):
 def test_bytes_to_array(type_, input_, expected_output):
     array = types.Array(type_=type_, values=input_)
     bytes_ = bytes(array)
-    print(f"{array=}; {bytes_=}")
     array_from_bytes = types.Array.from_bytes(bytes_, type_)
     assert array_from_bytes == array, f"{array=}; {array_from_bytes=}"
 

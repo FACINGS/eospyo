@@ -19,7 +19,7 @@ setcode_data = [
     eospyo.Data(
         name="code",  # select "code" field to set a wasm file
         value=eospyo.types.Wasm(
-            "test_contract/test_contract.wasm"
+            eospyo.types.load_bin_from_path("test_contract/test_contract.wasm")
         ),  # path from current directory to wasm file
     ),
 ]
@@ -32,7 +32,7 @@ setabi_data = [
     eospyo.Data(
         name="abi",  # select "abi" field to set a abi file
         value=eospyo.types.Abi(
-            "test_contract/test_contract.abi"
+            eospyo.types.load_dict_from_path("test_contract/test_contract.abi")
         ),  # path from current directory to abi file
     ),
 ]
