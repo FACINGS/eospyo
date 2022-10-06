@@ -120,7 +120,6 @@ def test_type_bytes(class_, input_, expected_output):
 def test_bytes_to_type(class_, input_, expected_output):
     uses_file = {
         types.Abi,
-        types.Wasm,
     }
     if class_ not in uses_file:
         instance = class_(input_)

@@ -793,7 +793,11 @@ class Wasm(EosioType):
 
     @classmethod
     def from_bytes(cls, bytes_):
-        return bytes_
+        uint8_array = Array.from_bytes(bytes_=bytes_, type_=Uint8)
+        uint8_list = uint8_array.values
+        hexcode = uint8_list_to_hex(uint8_list)
+        value = hex_to_bin(hexcode)
+        return cls(value=value)
 
 
 def hex_to_uint8_array(hex_string: str) -> Array:
@@ -817,8 +821,19 @@ def hex_to_uint8_array(hex_string: str) -> Array:
     return uint8_array
 
 
+def uint8_list_to_hex(uint8_list: list) -> str:
+    hexcode = ""
+    for int8 in uint8_list:
+        hexcode += ("00" + str(format(int8.value, "x")))[-2:]
+    return hexcode
+
+
 def bin_to_hex(bin: bytes) -> str:
     return str(binascii.hexlify(bin).decode("utf-8"))
+
+
+def hex_to_bin(hexcode: str) -> bytes:
+    return binascii.unhexlify(hexcode.encode("utf-8"))
 
 
 def save_bytes_to_file(eosio_type: EosioType, filepath: str, output_file: str):
