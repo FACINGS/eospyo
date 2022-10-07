@@ -7,6 +7,7 @@ import json
 import re
 import struct
 import sys
+import zipfile
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any, Dict, List
@@ -842,10 +843,18 @@ def save_bytes_to_file(eosio_type: EosioType, filepath: str, output_file: str):
         f.write(bytes_to_save)
 
 
-def load_bin_from_path(path: str):
-    filename = str(Path().resolve()) + "/" + path
-    with open(filename, "rb") as f:
-        return f.read()
+def load_bin_from_path(path: str, zip_extension=".wasm"):
+    filename = Path(str(Path().resolve()) + "/" + path)
+
+    if filename.suffix == ".zip":
+        with zipfile.ZipFile(filename) as thezip:
+            with thezip.open(
+                str(filename.stem) + zip_extension, mode="r"
+            ) as f:
+                return f.read()
+    else:
+        with open(filename, "rb") as f:
+            return f.read()
 
 
 def load_dict_from_path(path: str):

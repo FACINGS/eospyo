@@ -1,8 +1,6 @@
 """type tests."""
 
 import datetime as dt
-import json
-from pathlib import Path
 
 import pydantic
 import pytest
@@ -98,13 +96,13 @@ values = [
     ),
     (
         types.Wasm,
-        types.load_bin_from_path("test_contract/test_contract.wasm"),
-        types.load_bin_from_path("test_contract/bin_files/wasm_pass_bytes.bin"),
+        types.load_bin_from_path("tests/unit/test_contract/test_contract.zip"),
+        types.load_bin_from_path("tests/unit/test_contract/bin_files/wasm_pass_bytes.zip", ".bin"),
     ),
     (
         types.Abi,
-        types.load_dict_from_path("test_contract/test_contract.abi"),
-        types.load_bin_from_path("test_contract/bin_files/abi_pass_bytes.bin"),
+        types.load_dict_from_path("tests/unit/test_contract/test_contract.abi"),
+        types.load_bin_from_path("tests/unit/test_contract/bin_files/abi_pass_bytes.bin"),
     ),
 ]
 

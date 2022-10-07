@@ -121,7 +121,7 @@ def test_backend_transfer_transaction_serialization(net):
 
 def test_backend_set_wasm_code_transaction_serialization(net):
     wasm_file = eospyo.types.load_bin_from_path(
-        "test_contract/test_contract.wasm"
+        "tests/unit/test_contract/test_contract.wasm"
     )
 
     data = [
@@ -157,7 +157,7 @@ def test_backend_set_wasm_code_transaction_serialization(net):
 
 def test_backend_set_abi_transaction_serialization(net):
     abi_file = eospyo.types.load_dict_from_path(
-        "test_contract/test_contract.abi"
+        "tests/unit/test_contract/test_contract.abi"
     )
 
     data = [

@@ -19,7 +19,7 @@ setcode_data = [
     eospyo.Data(
         name="code",  # select "code" field to set a wasm file
         value=eospyo.types.Wasm(
-            eospyo.types.load_bin_from_path("test_contract/test_contract.wasm")
+            eospyo.types.load_bin_from_path("test_contract/test_contract.zip")
         ),  # path from current directory to wasm file
     ),
 ]
