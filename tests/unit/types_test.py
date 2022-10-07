@@ -2,9 +2,10 @@
 
 import datetime as dt
 
-import eospyo
 import pydantic
 import pytest
+
+import eospyo
 from eospyo import types
 
 values = [
@@ -93,6 +94,16 @@ values = [
         "99 WAX",
         b"c\x00\x00\x00\x00\x00\x00\x00\x00WAX\x00\x00\x00\x00",
     ),
+    (
+        types.Wasm,
+        types.load_bin_from_path("tests/unit/test_contract/test_contract.zip"),
+        types.load_bin_from_path("tests/unit/test_contract/bin_files/wasm_pass_bytes.zip", ".bin"),
+    ),
+    (
+        types.Abi,
+        types.load_dict_from_path("tests/unit/test_contract/test_contract.abi"),
+        types.load_bin_from_path("tests/unit/test_contract/bin_files/abi_pass_bytes.bin"),
+    ),
 ]
 
 
@@ -105,11 +116,14 @@ def test_type_bytes(class_, input_, expected_output):
 
 @pytest.mark.parametrize("class_,input_,expected_output", values)
 def test_bytes_to_type(class_, input_, expected_output):
-    instance = class_(input_)
-    bytes_ = bytes(instance)
-    print(f"{instance=}; {bytes_=}")
-    new_instance = class_.from_bytes(bytes_)
-    assert new_instance == instance
+    uses_file = {
+        types.Abi,
+    }
+    if class_ not in uses_file:
+        instance = class_(input_)
+        bytes_ = bytes(instance)
+        new_instance = class_.from_bytes(bytes_)
+        assert new_instance == instance
 
 
 @pytest.mark.parametrize("class_,input_,expected_output", values)
@@ -132,8 +146,8 @@ test_serialization = [
     (
         "string",
         "teststring",
-        "!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]"+
-        "^_`abcdefghijklmnopqrstuvwxyz{|}~ ", 
+        "!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]"
+        + "^_`abcdefghijklmnopqrstuvwxyz{|}~ ",
     ),
     ("string", "teststring", ""),
     ("int8", "tinteight", -128),
@@ -232,7 +246,7 @@ error_values = [
     (types.Asset, "99 "),
     (types.Asset, "99"),
     (types.Asset, "99. WAXXXXXX"),
-    (types.Asset, "99."),
+    (types.Asset, "99.")
 ]
 
 
@@ -267,7 +281,6 @@ def test_array_to_bytes(type_, input_, expected_output):
 def test_bytes_to_array(type_, input_, expected_output):
     array = types.Array(type_=type_, values=input_)
     bytes_ = bytes(array)
-    print(f"{array=}; {bytes_=}")
     array_from_bytes = types.Array.from_bytes(bytes_, type_)
     assert array_from_bytes == array, f"{array=}; {array_from_bytes=}"
 

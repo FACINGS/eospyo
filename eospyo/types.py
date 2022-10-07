@@ -1,11 +1,16 @@
 """Eosio data types."""
 
+import binascii
 import calendar
 import datetime as dt
+import json
 import re
 import struct
 import sys
+import zipfile
 from abc import ABC, abstractmethod
+from pathlib import Path
+from typing import Any, Dict, List
 
 import pydantic
 
@@ -602,3 +607,257 @@ def from_string(type_: str) -> EosioType:
         msg = f"Type {type_} not found. List of available {types=}"
         raise ValueError(msg)
     return class_
+
+
+class AbiSchema(pydantic.BaseModel):
+    comment: str = None
+    version: str
+    types: List
+    structs: List
+    actions: List
+    tables: List
+    ricardian_clauses: List = None
+    abi_extensions: List = None
+    variants: List = None
+    action_results: List = None
+    kv_tables: dict = None
+    abi_extensions: List = None
+
+    class Config:
+        extra = "forbid"
+        fields = {"comment": "____comment"}
+
+
+class Abi(EosioType):
+    value: dict
+
+    def import_abi_data(self, json_data):
+
+        abi_dict = AbiSchema(**json_data)
+
+        version = String(abi_dict.version)
+        type_list = []
+        struct_list = []
+        action_list = []
+        table_list = []
+
+        for value in abi_dict.types:
+            type_list.append(AbiType(value))
+        for value in abi_dict.structs:
+            struct_list.append(AbiStruct(value))
+        for value in abi_dict.actions:
+            action_list.append(AbiAction(value))
+        for value in abi_dict.tables:
+            table_list.append(AbiTable(value))
+
+        types = (
+            Array(type_=AbiType, values=type_list) if type_list else String("")
+        )
+        structs = (
+            Array(type_=AbiStruct, values=struct_list)
+            if struct_list
+            else String("")
+        )
+        actions = (
+            Array(type_=AbiAction, values=action_list)
+            if action_list
+            else String("")
+        )
+        tables = (
+            Array(type_=AbiTable, values=table_list)
+            if table_list
+            else String("")
+        )
+        ricardian_clauses = String("")
+        error_messages = String("")
+        abi_extensions = String("")
+        variants = String("")
+        action_results = String("")
+        kv_tables = String("")
+
+        abi_components = [
+            version,
+            types,
+            structs,
+            actions,
+            tables,
+            ricardian_clauses,
+            error_messages,
+            abi_extensions,
+            variants,
+            action_results,
+            kv_tables,
+        ]
+
+        return abi_components
+
+    def abi_bin_to_hex(self, abi_components):
+        abi_bytes = b""
+        for value in abi_components:
+            abi_bytes += bytes(value)
+
+        return bin_to_hex(abi_bytes)
+
+    def __bytes__(self):
+        abi_components = self.import_abi_data(self.value)
+        hexcode = self.abi_bin_to_hex(abi_components)
+        uint8_array = hex_to_uint8_array(hexcode)
+
+        return bytes(uint8_array)
+
+    @classmethod
+    def from_bytes(cls, bytes_):
+        return cls(value=bytes_)
+
+
+class AbiType(EosioType):
+    value: Dict[str, str]
+
+    def __bytes__(self):
+        new_type_name = String(self.value["new_type_name"])
+        json_type = String(self.value["type"])
+        return bytes(new_type_name) + bytes(json_type)
+
+    @classmethod
+    def from_bytes(cls, bytes_):
+        return cls(value=bytes_)
+
+
+class AbiStruct(EosioType):
+    value: Dict[str, Any]
+
+    def __bytes__(self):
+        name = String(self.value["name"])
+        base = String(self.value["base"])
+        field_bytes = []
+        for field in self.value["fields"]:
+            field_name = String(field["name"])
+            field_type = String(field["type"])
+            field_bytes.append(bytes(field_name) + bytes(field_type))
+
+        field_bytes_array = Array(type_=Bytes, values=field_bytes)
+        return bytes(name) + bytes(base) + bytes(field_bytes_array)
+
+    @classmethod
+    def from_bytes(cls, bytes_):
+        return cls(value=bytes_)
+
+
+class AbiAction(EosioType):
+    value: Dict[str, str]
+
+    def __bytes__(self):
+        name = Name(self.value["name"])
+        json_type = String(self.value["type"])
+        ricardian_contract = String(self.value["ricardian_contract"])
+
+        return bytes(name) + bytes(json_type) + bytes(ricardian_contract)
+
+    @classmethod
+    def from_bytes(cls, bytes_):
+        return cls(value=bytes_)
+
+
+class AbiTable(EosioType):
+    value: Dict[str, Any]
+
+    def __bytes__(self):
+        name = Name(self.value["name"])
+        index_type = String(self.value["index_type"])
+        key_names = self.value["key_names"]
+        key_types = self.value["key_types"]
+        json_type = String(self.value["type"])
+
+        key_names_array = Array(type_=String, values=key_names)
+        key_types_array = Array(type_=String, values=key_types)
+
+        return (
+            bytes(name)
+            + bytes(index_type)  # noqa: W503
+            + bytes(key_names_array)  # noqa: W503
+            + bytes(key_types_array)  # noqa: W503
+            + bytes(json_type)  # noqa: W503
+        )
+
+    @classmethod
+    def from_bytes(cls, bytes_):
+        return cls(value=bytes_)
+
+
+class Wasm(EosioType):
+    value: bytes
+
+    def __bytes__(self):
+        hexcode = bin_to_hex(self.value)
+        uint8_array = hex_to_uint8_array(hexcode)
+        return bytes(uint8_array)
+
+    @classmethod
+    def from_bytes(cls, bytes_):
+        uint8_array = Array.from_bytes(bytes_=bytes_, type_=Uint8)
+        uint8_list = uint8_array.values
+        hexcode = uint8_list_to_hex(uint8_list)
+        value = hex_to_bin(hexcode)
+        return cls(value=value)
+
+
+def hex_to_uint8_array(hex_string: str) -> Array:
+
+    if len(hex_string) % 2:
+        msg = "Odd number of hex digits in input file."
+        raise ValueError(msg)
+
+    bin_len = int(len(hex_string) / 2)
+    uint8_values = []
+
+    for i in range(0, bin_len):
+        try:
+            x = int(hex_string[(i * 2) : (i * 2 + 2)], base=16)  # NOQA: E203
+        except ValueError:
+            msg = "Issue converting hex to uint 8 array, Invalid hex string."
+            raise ValueError(msg)
+        uint8_values.append(x)
+
+    uint8_array = Array(type_=Uint8, values=uint8_values)
+    return uint8_array
+
+
+def uint8_list_to_hex(uint8_list: list) -> str:
+    hexcode = ""
+    for int8 in uint8_list:
+        hexcode += ("00" + str(format(int8.value, "x")))[-2:]
+    return hexcode
+
+
+def bin_to_hex(bin: bytes) -> str:
+    return str(binascii.hexlify(bin).decode("utf-8"))
+
+
+def hex_to_bin(hexcode: str) -> bytes:
+    return binascii.unhexlify(hexcode.encode("utf-8"))
+
+
+def save_bytes_to_file(eosio_type: EosioType, filepath: str, output_file: str):
+    bytes_to_save = bytes(eosio_type(filepath))
+    with open(output_file, "wb") as f:
+        f.write(bytes_to_save)
+
+
+def load_bin_from_path(path: str, zip_extension=".wasm"):
+    filename = Path(str(Path().resolve()) + "/" + path)
+
+    if filename.suffix == ".zip":
+        with zipfile.ZipFile(filename) as thezip:
+            with thezip.open(
+                str(filename.stem) + zip_extension, mode="r"
+            ) as f:
+                return f.read()
+    else:
+        with open(filename, "rb") as f:
+            return f.read()
+
+
+def load_dict_from_path(path: str):
+    filename = str(Path().resolve()) + "/" + path
+    with open(filename, "r") as f:
+        return json.load(f)
